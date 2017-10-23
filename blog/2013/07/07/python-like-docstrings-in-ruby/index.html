@@ -1,0 +1,335 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Python-like docstrings in Ruby! - chendo</title>
+	<meta name="author" content="Jack 'chendo' Chen">
+
+	
+	<meta name="description" content="Jul 7th, 2013 ruby Python-like docstrings in Ruby! About six months ago, I watched Peter Cooper&rsquo;s Ruby Trickshots and learnt that Ruby has an &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="chendo" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">
+	<img src="http://www.gravatar.com/avatar/e2dc9b044425e2df0a07873b0b65693e?s=160" alt="Profile Picture" style="width: 160px" />
+</div>
+<hgroup>
+  <h1><a href="/">chendo</a></h1>
+</hgroup>
+
+<p class="subtitle">Jack Chen is a software engineer, gadget enthusiast and video gamer. Lives in Melbourne, Australia. Works on <a href="https://alt.com.au/">Alt</a> and creator of <a href="http://shortcatapp.com">Shortcat</a>.</p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/chendo" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/chendo" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-07T14:46:00+02:00" data-updated="true" itemprop="datePublished">Jul 7<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ruby/'>ruby</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name">Python-like docstrings in Ruby!</h1>
+	<div class="entry-content" itemprop="articleBody"><p>About six months ago, I watched Peter Cooper&rsquo;s <a href="http://rubyreloaded.com/trickshots">Ruby Trickshots</a> and learnt that Ruby has an interesting syntax that allows you to concatenate strings by simply placing them after each other.</p>
+
+<p>For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="s2">&quot;foo&quot;</span> <span class="s2">&quot;bar&quot;</span> <span class="c1"># =&gt; &quot;foobar&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I quickly realised that that meant that this was valid syntax:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="s2">&quot;&quot;&quot;foo&quot;&quot;&quot;</span>   <span class="c1"># =&gt; &quot;foo&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which meant that Python-like docstrings were syntactically valid in Ruby!</p>
+
+<p>I hacked up a bit of code that let you read out the docstring in this gist:</p>
+
+<div><script src='https://gist.github.com/2146319.js'></script>
+<noscript><pre><code>class DocStrings
+  def docstrings!
+    &quot;&quot;&quot;
+      This is a docstring that&#39;s syntactically valid!
+      It&#39;ll do multiple lines!
+    &quot;&quot;&quot;
+  end
+
+  def single_line_docstring
+    &quot;&quot;&quot;Single line docstring!&quot;&quot;&quot;
+  end
+
+  def why?
+    &quot;&quot;&quot;
+      Cause I can? Duh.
+    &quot;&quot;&quot;
+  end
+
+  def how_does_it_work?
+    &quot;&quot;&quot;
+      I learnt that two strings side by side concats them together
+      and is valid Ruby from Peter Cooper (@peterc)&#39;s Ruby Trick Shots found
+      at http://rubyreloaded.com/trickshots/
+
+      Then the rest is just some good ol&#39; regex.
+    &quot;&quot;&quot;
+  end
+
+  def notes
+    &quot;&quot;&quot;
+      Double quotes not together like this: &quot;&quot;
+      breaks it.
+
+      Requires Method#source_location
+
+      Code below is unoptimised and needs further work
+    &quot;&quot;&quot;
+  end
+
+  def no_docstring
+
+  end
+end
+
+
+
+class Method
+  def doc
+    @doc ||= begin
+      path, line_number = source_location
+
+      return nil unless path &amp;&amp; File.exists?(path)
+
+      file = File.read(path)
+
+      if file =~ Regexp.new(%Q{\\A(?:.*?\n){#{line_number}}\s*?&quot;&quot;&quot;([\\s\\S]+?)&quot;&quot;&quot;})
+        $1.gsub(/\n\s+/, &quot;\n&quot;).strip
+      else
+        nil
+      end
+
+    end
+  end
+end
+
+
+doc = DocStrings.new
+(doc.methods - methods).each do |method_name|
+  puts &quot;method name #{method_name.to_s}:&quot;
+  puts doc.method(method_name).doc
+  puts &quot;----&quot;
+end
+</code></pre></noscript></div>
+
+
+<p>It was an interesting hack, but I thought that Ruby would have to evaluate the concatenation on every method invocation, hence adding a performance hit purely to add a docstring, and hence ditched the idea of taking it further, and then promptly forgot about it.</p>
+
+<p>Six months later, I found it when I was going through my old gists. I brought it up with CRuby Master <a href="http://twitter.com/charliesome">@charliesome</a>, and he informed me that CRuby is pretty smart and actually won&rsquo;t emit bytecode if it detects that the literals aren&rsquo;t actually used, so there is actually no performance hit (apart from when it&rsquo;s parsing).</p>
+
+<p>Proof:</p>
+
+<figure class='code'><figcaption><span>https://eval.in/36676 </span><a href='https://eval.in/36676' title='Download code'> Link</a></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">no_docstring</span>
+</span><span class='line'>  <span class="kp">nil</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">with_docstring</span>
+</span><span class='line'>  <span class="s2">&quot;&quot;&quot;Foo&quot;&quot;&quot;</span>
+</span><span class='line'>  <span class="kp">nil</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">puts</span> <span class="ss">RubyVM</span><span class="p">:</span><span class="ss">:InstructionSequence</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="nb">method</span><span class="p">(</span><span class="ss">:no_docstring</span><span class="p">))</span><span class="o">.</span><span class="n">disasm</span>
+</span><span class='line'><span class="nb">puts</span> <span class="s2">&quot;---&quot;</span>
+</span><span class='line'><span class="nb">puts</span> <span class="ss">RubyVM</span><span class="p">:</span><span class="ss">:InstructionSequence</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="nb">method</span><span class="p">(</span><span class="ss">:with_docstring</span><span class="p">))</span><span class="o">.</span><span class="n">disasm</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Output:</span>
+</span><span class='line'><span class="c1"># == disasm: &lt;RubyVM::InstructionSequence:no_docstring@/tmp/execpad-ecb5745fbd46/source-ecb5745fbd46&gt;</span>
+</span><span class='line'><span class="c1"># 0000 trace            8                                               (   1)</span>
+</span><span class='line'><span class="c1"># 0002 putnil</span>
+</span><span class='line'><span class="c1"># 0003 trace            16                                              (   3)</span>
+</span><span class='line'><span class="c1"># 0005 leave</span>
+</span><span class='line'><span class="c1"># ---</span>
+</span><span class='line'><span class="c1"># == disasm: &lt;RubyVM::InstructionSequence:with_docstring@/tmp/execpad-ecb5745fbd46/source-ecb5745fbd46&gt;</span>
+</span><span class='line'><span class="c1"># 0000 trace            8                                               (   5)</span>
+</span><span class='line'><span class="c1"># 0002 putnil</span>
+</span><span class='line'><span class="c1"># 0003 trace            16                                              (   8)</span>
+</span><span class='line'><span class="c1"># 0005 leave</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I made a gem called <a href="https://github.com/chendo/docstrings">docstrings</a> that allows accessing docstrings via <code>Method#docstring</code>. I&rsquo;m not entirely sure how useful this actually is, so let me know if you end up using it.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2017 - Jack 'chendo' Chen -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'chendo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/';
+        var disqus_url = 'http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-110306-6']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

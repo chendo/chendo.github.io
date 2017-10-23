@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: dtrace | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/dtrace/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Reverse engineering Xcode with dtrace]]></title>
+    <link href="http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/"/>
+    <updated>2013-10-22T16:52:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace</id>
+    <content type="html"><![CDATA[<p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
+
+<p>For me, it is/<a href="https://github.com/chendo/FuzzyAutocompletePlugin">was</a> the lack of a good autocomplete that really ticks me off. Xcode&rsquo;s autocomplete is prefix-based, so Xcode will only show completions where the start of the completion matches your incomplete word. This is rather frustrating, as the prefix for completion items tends to be the same.</p>
+
+<p>For example, if you wanted to complete <code>NSAccessibilityRoleDescriptionForUIElement</code>, you&rsquo;d probably go:</p>
+
+<ul>
+<li><code>nsacc&lt;TAB&gt;</code> to get <code>NSAccessibility</code></li>
+<li><code>ro&lt;TAB&gt;</code> to get <code>NSAccessibilityRole</code></li>
+<li><code>des&lt;TAB&gt;</code> to get <code>NSAccessibilityRoleDescription</code></li>
+<li>and finally <code>f&lt;TAB&gt;</code> to get <code>NSAccessibilityRoleDescriptionForUIElement</code></li>
+</ul>
+
+
+<p>Of course, you can always use arrow keys to scroll through the list at some point to select it, but using arrow keys isn&rsquo;t a great solution.</p>
+
+<p>It would be great if Xcode supported fuzzy autocompletion (like Sublime Text, AppCode, etc etc). I mentioned this to <a href="https://twitter.com/alanjrogers">@alanjrogers</a> one Friday afternoon and he told me I should write an Xcode plugin for it.</p>
+
+<p>Why not?</p>
+
+<h2>Step 1: Making a plugin for Xcode 5</h2>
+
+<p>I found BlackDog Foundry&rsquo;s <a href="http://www.blackdogfoundry.com/blog/creating-an-xcode4-plugin/">Creating an Xcode 4 Plugin</a> which got me off to a good start where I was able to get code loaded into Xcode 5, with a couple of Xcode 5-specific <code>Info.plist</code> UUID tweaks from <a href="https://github.com/ricobeck/KFCocoaPodsPlugin">KFCocoaPodsPlugin</a>.</p>
+
+<h2>Step 2: Figure out what to hook into</h2>
+
+<p>With <code>class-dump</code>, I dumped <code>Xcode.app</code>&rsquo;s classes and started searching for likely places to hook into. I stumbled across the <code>DVTTextCompletion*</code> class cluster which was a good place to start. Before you can use the dumped headers, you need to remove the <code>- (void).cxx_destruct</code> method declaration if it exists. You also need to remove some <code>#import</code> statements that cause the build to fail, like <code>#import &lt;objc/NSObject.h&gt;</code> and <code>AppKit</code> imports.</p>
+
+<p>I added <code>JRSwizzle</code> with CocoaPods and started to poke at some classes I thought would be a good start, like <code>DVTTextCompletionSession</code>.</p>
+
+<p>Unfortunately, this didn&rsquo;t get me very far. Picking random methods to swizzle was a time consuming process which involved lots of restarting of Xcode. I needed a better way to figure out what I should hook into.</p>
+
+<p>Some googling turned up the <code>NSObjCMessageLoggingEnabled</code> environment variable, where it would log every message send to <code>/tmp/msgSend-&lt;pid&gt;</code>. Unfortunately, starting up Xcode generated about 15 million lines of data (a whopping <strong>659MB!!</strong>), so that clearly wasn&rsquo;t what I was after.</p>
+
+<h2><code>dtrace</code> to the rescue</h2>
+
+<p>I found a little <code>dtrace</code> snippet on <a href="http://stackoverflow.com/a/10749819/2860998">Stackoverflow</a> which would let you probe message sends of a certain class, which gave me a much better indication of what I should be looking at (after tracing <code>DVTTextCompletionSession</code>), however it only output the method calls without any context.</p>
+
+<p>Further googling turned up an article by Jon Haslam on <a href="https://blogs.oracle.com/jonh/entry/dtrace_and_visualisation">DTrace and Visualisation</a>, where he described using the <code>flowindent</code> option on <code>dtrace</code> to show a call tree. This was better, but it was limited to showing the method name only unless you used <code>printf</code> to show the class. It was messy and not ideal.</p>
+
+<p>I eventually found <a href="http://stackoverflow.com/a/16242756/2860998">this script</a> that essentially reimplemented <code>flowindent</code> but with a better visualisatino of Objective-C method calls.</p>
+
+<p>I modified it to provide better indentation and allow scoping down to a certain class. Script is below:</p>
+
+<p>```d trace_msg_send.sh</p>
+
+<h1>!/usr/sbin/dtrace -s</h1>
+
+<h1>pragma D option quiet</h1>
+
+<p>unsigned long long indention;
+int indentation_amount;</p>
+
+<p>BEGIN {
+  indentation_amount = 4;
+}</p>
+
+<p>objc$target:$1::entry
+{</p>
+
+<pre><code>method = (string)&amp;probefunc[1];
+type = probefunc[0];
+class = probemod;
+printf("%*s%s %c[%s %s]\n", indention * indentation_amount, "", "-&gt;", type, class, method);
+indention++;
+</code></pre>
+
+<p>}
+objc$target:$1::return
+{</p>
+
+<pre><code>indention--;
+method = (string)&amp;probefunc[1];
+type = probefunc[0];
+class = probemod;
+printf("%*s%s %c[%s %s]\n", indention * indentation_amount, "", "&lt;-", type, class, method);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Usage: <code>sudo ./trace_msg_send.sh -p &lt;pid of app&gt; &lt;objc class&gt;</code></p>
+
+<p>This produced a much better looking and easier to understand call tree:</p>
+
+<p>```objc
+&ndash;> &ndash;[DVTTextCompletionSession initWithTextView:atLocation:cursorLocation:]
+&lt;&ndash; &ndash;[DVTTextCompletionSession initWithTextView:atLocation:cursorLocation:]
+&ndash;> &ndash;[DVTTextCompletionSession showCompletionsExplicitly:]</p>
+
+<pre><code>-&gt; -[DVTTextCompletionSession isShowingCompletions]
+&lt;- -[DVTTextCompletionSession isShowingCompletions]
+-&gt; -[DVTTextCompletionSession _ensureCompletionsUpToDate]
+    -&gt; -[DVTTextCompletionSession textView]
+    &lt;- -[DVTTextCompletionSession textView]
+    -&gt; -[DVTTextCompletionSession textView]
+    &lt;- -[DVTTextCompletionSession textView]
+&lt;- -[DVTTextCompletionSession _ensureCompletionsUpToDate]
+-&gt; -[DVTTextCompletionSession textView]
+&lt;- -[DVTTextCompletionSession textView]
+-&gt; -[DVTTextCompletionSession setPendingRequestState:]
+    -&gt; -[DVTTextCompletionSession readyToShowCompletions]
+        -&gt; -[DVTTextCompletionSession filteredCompletionsAlpha]
+        &lt;- -[DVTTextCompletionSession filteredCompletionsAlpha]
+    &lt;- -[DVTTextCompletionSession readyToShowCompletions]
+&lt;- -[DVTTextCompletionSession showCompletionsExplicitly:]
+-&gt; -[DVTTextCompletionSession isShowingCompletions]
+&lt;- -[DVTTextCompletionSession isShowingCompletions]
+-&gt; -[DVTTextCompletionSession setAllCompletions:]
+&lt;- -[DVTTextCompletionSession setAllCompletions:]
+-&gt; -[DVTTextCompletionSession _prefixForCurrentLocation]
+    -&gt; -[DVTTextCompletionSession textView]
+    &lt;- -[DVTTextCompletionSession textView]
+&lt;- -[DVTTextCompletionSession _prefixForCurrentLocation]
+-&gt; -[DVTTextCompletionSession _setFilteringPrefix:forceFilter:]
+    -&gt; -[DVTTextCompletionSession allCompletions]
+    &lt;- -[DVTTextCompletionSession allCompletions]
+    -&gt; -[DVTTextCompletionSession _bestMatchInSortedArray:usingPrefix:]
+    &lt;- -[DVTTextCompletionSession _bestMatchInSortedArray:usingPrefix:]
+    -&gt; -[DVTTextCompletionSession _usefulPartialCompletionPrefixForItems:selectedIndex:filteringPrefix:]
+        -&gt; -[DVTTextCompletionSession _commonPrefixForItems:]
+            -&gt; -[DVTTextCompletionSession rangeOfFirstWordInString:]
+            &lt;- -[DVTTextCompletionSession rangeOfFirstWordInString:]
+</code></pre>
+
+<p>```</p>
+
+<h4>A quick breakdown of a <code>dtrace</code> probe</h4>
+
+<p>A <code>dtrace</code> probe is defined by <code>provider:module:function:name</code>. In the above script, I use <code>objc$target:$1::entry</code>. <code>$target</code> is a macro variable which is filled in by <code>pid</code> passed in by the command line via the <code>-p</code> flag. <code>$1</code>, <code>$2</code> and so forth are the arguments passed into <code>dtrace</code>.</p>
+
+<p>Example: <code>sudo ./trace_msg_send.sh -p 12345 DVTTextCompletionSession</code></p>
+
+<ul>
+<li>Provider: objc12345</li>
+<li>Module: DVTTextCompletionSession</li>
+<li>Function: [everything]</li>
+<li>Name: entry</li>
+</ul>
+
+
+<p>This will match all method entry events within <code>DVTTextCompletionSession</code> for pid 12345.</p>
+
+<p><code>dtrace</code> supports wildcards: <code>*</code> for multiple characters, <code>?</code> for a single character.</p>
+
+<p>For a more detailed rundown on <code>dtrace</code>, see <a href="http://blog.bignerdranch.com/1907-hooked-on-dtrace-part-1/">Hooked on DTrace</a></p>
+
+<h2>Step 3: Find out what Xcode is doing</h2>
+
+<p>A quick swizzle of <code>setAllCompletions:</code> showed that Xcode sets the completion list to whatever is autocompletable at a particular scope. On a new line, it would set all the constants, C methods, macros, etc etc, which ended to be about 40,000. When autocompleting on <code>[self</code> on one of my plugin classes, it set the completion list to a much more managable 278.</p>
+
+<p>After some digging, I found that <code>_setFilteringPrefix:forceFilter:</code> did what I expected and was called every time the user typed. A few hours of trial and error later, I managed to hook up Xcode&rsquo;s own <code>IDEOpenQuicklyPattern</code> class to perform fuzzy filtering of the completions, but I still relied on calling the original fuzzy matching method because otherwise the autocompletion list window would not update correctly. This was adding 30-50ms of execution time on the main thread, which is not ideal, so the next step is to figure out what Xcode is doing behind the scenes to update this.</p>
+
+<p><code>DVTTextCompletionListWindowController</code> is probably what I wanted to look at, but using the same script wasn&rsquo;t useful as it was filled with <code>-[DVTTextCompletionListWindowController tableView:objectValueForTableColumn:row:]</code> calls, and it was missing a return call so the indentation kept growing.</p>
+
+<p>I wrote another script that let me filter out the method calls I didn&rsquo;t want polluting my trace, and added the ability to only trace message sends within a certain method.</p>
+
+<p>```d trace_within_method_and_filter.sh</p>
+
+<h1>!/usr/sbin/dtrace -s</h1>
+
+<h1>pragma D option quiet</h1>
+
+<p>unsigned long long indention;
+int indentation_amount;</p>
+
+<p>BEGIN {
+  indentation_amount = 4;
+}</p>
+
+<p>/<em> the : in method selectors must be replaced with ? </em>/
+objc$target:DVTTextCompletionSession:&ndash;_setFilteringPrefix?forceFilter?:entry
+{</p>
+
+<pre><code>tracing++;
+</code></pre>
+
+<p>}</p>
+
+<p>objc$target:DVTTextCompletionSession:&ndash;_setFilteringPrefix?forceFilter?:return
+{</p>
+
+<pre><code>tracing--;
+</code></pre>
+
+<p>}</p>
+
+<p>objc$target:DVTTextCompletionList*::entry
+/</p>
+
+<pre><code>tracing &gt; 0 &amp;&amp;
+&amp;probefunc[1] != "tableView:willDisplayCell:forTableColumn:row:" &amp;&amp;
+&amp;probefunc[1] != "tableView:objectValueForTableColumn:row:"
+</code></pre>
+
+<p>/
+{</p>
+
+<pre><code>method = (string)&amp;probefunc[1];
+type = probefunc[0];
+class = probemod;
+printf("%lu %*s%s %c[%s %s]\n", timestamp, indention * indentation_amount, "", "-&gt;", type, class, method);
+indention++;
+</code></pre>
+
+<p>}</p>
+
+<p>objc$target:DVTTextCompletionList*::return
+/</p>
+
+<pre><code>tracing &gt; 0 &amp;&amp;
+&amp;probefunc[1] != "tableView:willDisplayCell:forTableColumn:row:" &amp;&amp;
+&amp;probefunc[1] != "tableView:objectValueForTableColumn:row:"
+</code></pre>
+
+<p>/
+{</p>
+
+<pre><code>indention--;
+method = (string)&amp;probefunc[1];
+type = probefunc[0];
+class = probemod;
+printf("%lu %*s%s %c[%s %s]\n", timestamp, indention * indentation_amount, "", "&lt;-", type, class, method);
+</code></pre>
+
+<p>}
+```</p>
+
+<p>I added timestamps to the result because the output kept ending out of order.</p>
+
+<p>I ran with <code>sudo ./trace_within_method_and_filter.sh -p</code>pidof xcode<code>&gt; output.txt</code>, then fixed the order and removed timestamps with <code>cat output.txt | sort -n | cut -c 17-200</code>.</p>
+
+<p>Output with calls to stuff to properties (<code>window</code>, <code>session</code>, and <code>showingWindow</code>) with no inner method calls removed for brevity:</p>
+
+<p>```objc
+&ndash;> &ndash;[DVTTextCompletionListWindowController initWithSession:]
+&lt;&ndash; &ndash;[DVTTextCompletionListWindowController initWithSession:]
+&ndash;> &ndash;[DVTTextCompletionListWindowController showWindowForTextFrame:explicitAnimation:]</p>
+
+<pre><code>-&gt; -[DVTTextCompletionListWindowController window]
+    -&gt; -[DVTTextCompletionListWindowController windowDidLoad]
+        -&gt; -[DVTTextCompletionListWindowController _loadColorsFromCurrentTheme]
+            -&gt; -[DVTTextCompletionListWindowController _iconShadow]
+            &lt;- -[DVTTextCompletionListWindowController _iconShadow]
+            -&gt; -[DVTTextCompletionListWindowController numberOfRowsInTableView:]
+            &lt;- -[DVTTextCompletionListWindowController numberOfRowsInTableView:]
+        &lt;- -[DVTTextCompletionListWindowController windowDidLoad]
+    &lt;- -[DVTTextCompletionListWindowController window]
+    -&gt; -[DVTTextCompletionListWindowController numberOfRowsInTableView:]
+    &lt;- -[DVTTextCompletionListWindowController numberOfRowsInTableView:]
+    -&gt; -[DVTTextCompletionListWindowController _updateSelectedRow]
+        -&gt; -[DVTTextCompletionListWindowController tableViewSelectionDidChange:]
+        &lt;- -[DVTTextCompletionListWindowController _updateSelectedRow]
+        -&gt; -[DVTTextCompletionListWindowController _updateCurrentDisplayState]
+            -&gt; -[DVTTextCompletionListWindowController _getTitleColumnWidth:typeColumnWidth:]
+                -&gt; -[DVTTextCompletionListWindowController _preferredWindowFrameForTextFrame:columnsWidth:titleColumnX:]
+                &lt;- -[DVTTextCompletionListWindowController _preferredWindowFrameForTextFrame:columnsWidth:titleColumnX:]
+            &lt;- -[DVTTextCompletionListWindowController _updateCurrentDisplayState]
+            &lt;- -[DVTTextCompletionListWindowController _updateSelectedRow]
+            -&gt; -[DVTTextCompletionListWindowController setHideReason:]
+                -&gt; -[DVTTextCompletionListWindowController _usefulPrefixAttributes]
+                &lt;- -[DVTTextCompletionListWindowController _usefulPrefixAttributes]
+                -&gt; -[DVTTextCompletionListWindowController _updateInfoNewSelection]
+                    -&gt; -[DVTTextCompletionListWindowController showInfoForSelectedCompletionItem]
+                        -&gt; -[DVTTextCompletionListWindowController _selectedCompletionItem]
+                        &lt;- -[DVTTextCompletionListWindowController _selectedCompletionItem]
+                        -&gt; -[DVTTextCompletionListWindowController showInfoPaneForCompletionItem:]
+                            -&gt; -[DVTTextCompletionListWindowController _selectedCompletionItem]
+                            &lt;- -[DVTTextCompletionListWindowController _selectedCompletionItem]
+                            -&gt; -[DVTTextCompletionListWindowController _updateCurrentDisplayStateForQuickHelp]
+                                -&gt; -[DVTTextCompletionListWindowController _usefulPrefixAttributes]
+                                &lt;- -[DVTTextCompletionListWindowController _usefulPrefixAttributes]
+                            &lt;- -[DVTTextCompletionListWindowController showInfoPaneForCompletionItem:]
+                        &lt;- -[DVTTextCompletionListWindowController showInfoForSelectedCompletionItem]
+                    &lt;- -[DVTTextCompletionListWindowController showWindowForTextFrame:explicitAnimation:]
+</code></pre>
+
+<p>```</p>
+
+<p>The call stack is missing some return traces and I&rsquo;m not sure why yet, but we&rsquo;ve found some relevant methods: <code>_updateCurrentDisplayState</code> and <code>_updateSelectedRow</code>. I wasn&rsquo;t having issues with the row updating, so I grabbed a reference to <code>DVTTextCompletionListWindowController</code> with <code>[self _listWindowController]</code> and call <code>-_updateCurrentDisplayState</code>. This solved the display issue!</p>
+
+<p><code>dtrace</code> is pretty awesome, but editing <code>dtrace</code> scripts was annoying. If I have to do more of this, I&rsquo;d probably write a wrapper using <a href="https://github.com/chrisa/ruby-dtrace">ruby-dtrace</a> to help automate filtering etc.</p>
+
+<h1>FuzzyAutocomplete Plugin for Xcode</h1>
+
+<p>The end product is <a href="https://github.com/chendo/FuzzyAutocompletePlugin">FuzzyAutocomplete</a> (<a href="https://github.com/chendo/FuzzyAutocompletePlugin">github.com/chendo/FuzzyAutocompletePlugin</a>), which works in Xcode 5. It shouldn&rsquo;t conflict with any existing plugins like <a href="https://github.com/ksuther/KSImageNamed-Xcode">KSImageNamed</a> as most plugins expose additional completion items rather than change the filtering.</p>
+
+<p>You can install it with <a href="http://mneorr.github.io/Alcatraz/">Alcatraz</a> or by cloning it and building it yourself. See the <a href="https://github.com/chendo/FuzzyAutocompletePlugin">project on Github</a> for more info.</p>
+]]></content>
+  </entry>
+  
+</feed>

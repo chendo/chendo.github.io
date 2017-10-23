@@ -1,0 +1,220 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Simulating out of order packets on OS X - chendo</title>
+	<meta name="author" content="Jack 'chendo' Chen">
+
+	
+	<meta name="description" content="Oct 11th, 2014 debugging, osx Simulating out of order packets on OS X I needed a way to simulate out of order packets in order to try to reproduce &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="chendo" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">
+	<img src="http://www.gravatar.com/avatar/e2dc9b044425e2df0a07873b0b65693e?s=160" alt="Profile Picture" style="width: 160px" />
+</div>
+<hgroup>
+  <h1><a href="/">chendo</a></h1>
+</hgroup>
+
+<p class="subtitle">Jack Chen is a software engineer, gadget enthusiast and video gamer. Lives in Melbourne, Australia. Works on <a href="https://alt.com.au/">Alt</a> and creator of <a href="http://shortcatapp.com">Shortcat</a>.</p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/chendo" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/chendo" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-10-11T17:51:00+02:00" data-updated="true" itemprop="datePublished">Oct 11<span>th</span>, 2014</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/debugging/'>debugging</a>, <a class='category' href='/blog/categories/osx/'>osx</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name">Simulating out of order packets on OS X</h1>
+	<div class="entry-content" itemprop="articleBody"><p>I needed a way to simulate out of order packets in order to try to reproduce an issue I&rsquo;ve been seeing at work, and I figured out a fairly simple way that only involves <code>ipfw</code> which is built-in on 10.9 but unfortunately has been removed in 10.10. The same technique should be adaptable to <code>pfctl</code> though.</p>
+
+<h2>Step 1 &ndash; Creating a pipe</h2>
+
+<p>To be able to simulate out of order packets, you must create a pipe in <code>ipfw</code> with a rule that matches the traffic you&rsquo;re trying to affect.</p>
+
+<p><code>sudo ipfw add 1 pipe 1 ip from &lt;host&gt; to me</code></p>
+
+<p>You must create another pipe if you want to affect traffic in the opposite direction.</p>
+
+<p><code>sudo ipfw add 2 pipe 1 ip from me to &lt;host&gt;</code></p>
+
+<h2>Step 2 &ndash; Simulate out of order packets</h2>
+
+<p><code>ipfw</code> lets you set a bunch of config options on traffic flowing through a pipe. You can limit the amount of bandwidth with <code>bw &lt;speed&gt;</code>, packet loss with <code>plr &lt;rate&gt;</code>, and latency with <code>delay &lt;time&gt;</code>.</p>
+
+<p>So to simulate 1 second latency, we would run:</p>
+
+<p><code>sudo ipfw pipe 1 config delay 1s</code></p>
+
+<p>However, this doesn&rsquo;t simulate out of order packets by itself. You can simulate packet loss which can induce out of order packets with:</p>
+
+<p><code>sudo ipfw pipe 1 config plr 0.05 # 5% packet loss</code></p>
+
+<p>But I believe I found a better solution (IMO) by constantly setting the delay to random values every couple of milliseconds.</p>
+
+<figure class='code'><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='plain'><span class='line'>sudo ruby -e "loop { \\`ipfw pipe 1 config delay #{rand(500) + 100}ms\\`; sleep 0.01 }"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>where the delay is randomly set to (0-500) + 100ms every 10ms.</p>
+
+<h2>Step 3 &ndash; Clean up</h2>
+
+<p>Once you&rsquo;re done with your testing, be sure to remove the rules.</p>
+
+<p><code>sudo ipfw del 1</code></p>
+
+<h2>Conclusion</h2>
+
+<p>This worked well enough for me, and I hope it helps you too. If someone figures out how to do this with <code>pfctl</code> on 10.10, please let me know!</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2017 - Jack 'chendo' Chen -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'chendo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/';
+        var disqus_url = 'http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-110306-6']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: rubymotion | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/rubymotion/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Building a Command Line OS X app with RubyMotion]]></title>
+    <link href="http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion/"/>
+    <updated>2013-10-04T18:38:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion</id>
+    <content type="html"><![CDATA[<p>I decided to write a command line tool with <a href="http://rubymotion.com/">RubyMotion</a> to <a href="http://chen.do/blog/2013/10/04/visualising-rects-from-lldb/">visualise CGRects and NSRects from lldb</a>, but I quickly discovered that RubyMotion does not support this out of the box.</p>
+
+<p>You can build an OS X app that doesn&rsquo;t present a UI by by setting <code>LSUIElement</code> to <code>true</code> and not creating any UI, but when you copy the binary out of the bundle and try to run it, you get an error that looks something like this:</p>
+
+<p><code>
+drawrect[59471:707] No Info.plist file in application bundle or no NSPrincipalClass in the Info.plist file, exiting
+</code></p>
+
+<p>This is due to the <code>NSApplicationMain</code> function not being able to find an <code>Info.plist</code> due to the binary no longer residing inside a bundle. We need to tweak RubyMotion&rsquo;s compile process to skip this method.</p>
+
+<h2>Replacing <code>NSApplicationMain</code></h2>
+
+<p>I tracked down the offending snippet of code within <a href="https://github.com/HipByte/RubyMotion/blob/794b0506af099ca965d666ca1176a92979854259/lib/motion/project/template/osx/config.rb#L188-L214"><code>lib/motion/project/template/osx/config.rb</code></a>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>config.rb <a href="https://github.com/HipByte/RubyMotion/blob/794b0506af099ca965d666ca1176a92979854259/lib/motion/project/template/osx/config.rb#L188-L214">https://github.com/HipByte/RubyMotion/blob/794b0506af099ca965d666ca1176a92979854259/lib/motion/project/template/osx/config.rb#L188-L214</a> </span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;  main_txt &amp;lt;&amp;lt; &amp;lt;&amp;lt;EOS</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;int</span>
+</span><span class='line'><span class="sr">main(int argc, char **argv)</span>
+</span><span class='line'><span class="sr">{&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="no">NSAutoreleasePool</span> <span class="o">*</span><span class="n">pool</span> <span class="o">=</span> <span class="o">[[</span><span class="no">NSAutoreleasePool</span> <span class="n">alloc</span><span class="o">]</span> <span class="n">init</span><span class="o">]</span><span class="p">;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="no">EOS</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;if ENV[&#39;ARR_CYCLES_DISABLE&#39;]</span>
+</span><span class='line'><span class="sr">  main_txt &amp;lt;&amp;lt; &amp;lt;&amp;lt;EOS</span>
+</span><span class='line'><span class="sr">setenv(&quot;ARR_CYCLES_DISABLE&quot;, &quot;1&quot;, true);</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;EOS&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">end</span>
+</span><span class='line'><span class="n">main_txt</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="no">EOS</span>
+</span><span class='line'><span class="no">RubyMotionInit</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+</span><span class='line'><span class="no">NSApplication</span> <span class="o">*</span><span class="n">app</span> <span class="o">=</span> <span class="o">[</span><span class="no">NSApplication</span> <span class="n">sharedApplication</span><span class="o">]</span><span class="p">;</span>
+</span><span class='line'><span class="o">[</span><span class="n">app</span> <span class="ss">setDelegate</span><span class="p">:</span><span class="o">[</span><span class="no">NSClassFromString</span><span class="p">(</span><span class="err">@</span><span class="s2">&quot;</span><span class="si">#{</span><span class="n">delegate_class</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kp">new</span><span class="o">]]</span><span class="p">;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="no">EOS</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;if spec_mode</span>
+</span><span class='line'><span class="sr">  main_txt &amp;lt;&amp;lt; &quot;SpecLauncher *specLauncher = [[SpecLauncher alloc] init];\n&quot;</span>
+</span><span class='line'><span class="sr">  main_txt &amp;lt;&amp;lt; &quot;[[NSNotificationCenter defaultCenter] addObserver:specLauncher selector:@selector(appLaunched:) name:NSApplicationDidFinishLaunchingNotification object:nil];\n&quot;</span>
+</span><span class='line'><span class="sr">end</span>
+</span><span class='line'><span class="sr">main_txt &amp;lt;&amp;lt; &amp;lt;&amp;lt;EOS</span>
+</span><span class='line'><span class="sr">NSApplicationMain(argc, (const char **)argv);</span>
+</span><span class='line'><span class="sr">[pool release];</span>
+</span><span class='line'><span class="sr">rb_exit(0);</span>
+</span><span class='line'><span class="sr">return 0;</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;}</span>
+</span><span class='line'><span class="sr">EOS</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>As you can see on line 139, it calls <code>NSApplicationMain</code> which is the source of the error we&rsquo;re seeing as <code>NSApplicationMain</code> tries to load the NIB as well as construct the application object. See <a href="http://www.cocoawithlove.com/2009/01/demystifying-nsapplication-by.html">Matt Gallager&rsquo;s article on NSApplicationMain</a> for more details.</p>
+
+<h2>Patching RubyMotion&rsquo;s compile step</h2>
+
+<p>We could do this one of two ways:</p>
+
+<ul>
+<li>Create a new OS X command line template</li>
+<li>Monkey-patch the Config class</li>
+</ul>
+
+
+<p>Given I&rsquo;m kinda lazy, monkey-patching the config class was the way to go for me :)</p>
+
+<p>Make a directory called <code>lib</code> in the root of the RubyMotion project, and make a file named <code>osx_cli.rb</code>.</p>
+
+<p>We need to patch the <code>main_cpp_file_txt</code> method of the <code>Motion::Project::OSXConfig</code> class, so your file should look something like this:</p>
+
+<p>```ruby osx_cli.rb
+module Motion::Project
+  class OSXConfig &lt; XcodeConfig</p>
+
+<pre><code>def main_cpp_file_txt(spec_objs)
+
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Then you want to paste the original method body in, and then we can start patching!</p>
+
+<p>Let&rsquo;s remove the <code>NSApplicationMain</code> call as we won&rsquo;t be needing that (yet).</p>
+
+<p>Command line applications don&rsquo;t need an application delegate either, so let&rsquo;s delete the following lines:</p>
+
+<p>```objc</p>
+
+<pre><code>NSApplication *app = [NSApplication sharedApplication];
+[app setDelegate:[NSClassFromString(@"#{delegate_class}") new]];
+</code></pre>
+
+<p>```</p>
+
+<p>However, we still need an entry point into our Ruby code. Let&rsquo;s use the pre-existing <code>delegate_class</code> variable to define the entry point class.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>osx_cli.rb </span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;main_txt &amp;lt;&amp;lt; &amp;lt;&amp;lt;EOS</span>
+</span><span class='line'><span class="sr">[[NSClassFromString(@&quot;</span><span class="si">#{</span><span class="n">delegate_class</span><span class="si">}</span><span class="sr">&quot;) new] main];</span>
+</span><span class='line'><span class="sr">[pool release];</span>
+</span><span class='line'><span class="sr">rb_exit(0);</span>
+</span><span class='line'><span class="sr">return 0;</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;}</span>
+</span><span class='line'><span class="sr">EOS</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Now rather than calling <code>NSApplicationMain</code>, we&rsquo;re now calling the <code>main</code> instance method on the application delegate class (which is <code>AppDelegate</code> by default).</p>
+
+<p>To make RubyMotion actually pick our code up, we need to <code>require</code> it in the <code>Rakefile</code>.</p>
+
+<p>```ruby Rakefile</p>
+
+<h1>&ndash;<em>&ndash; coding: utf-8 &ndash;</em>&ndash;</h1>
+
+<p>$:.unshift(&ldquo;/Library/RubyMotion/lib&rdquo;)
+require &lsquo;motion/project/template/osx&rsquo;
+require_relative &lsquo;lib/osx_cli&rsquo;</p>
+
+<p>begin
+  require &lsquo;bundler&rsquo;
+  Bundler.require
+rescue LoadError
+end</p>
+
+<p>Motion::Project::App.setup do |app|
+  # Use `rake config' to see complete project settings.
+  app.name = &lsquo;drawrect&rsquo;
+end
+```</p>
+
+<p>When you run your app, it should now call <code>AppDelegate#main</code>!</p>
+
+<h2>What if I still need a run loop?</h2>
+
+<p>I thought I was home scot-free at this point, however when I tried to initialize a <code>NSWindow</code> in the daemon component of <code>drawrect</code>, I ran into these errors:</p>
+
+<p><code>
+drawrect[61361:707] _NXCreateWindowWithStyleMask: error setting window property (1000)
+drawrect[61361:707] error [1000] setting colorSpace to DELL 3008WFP colorspace
+drawrect[61361:707] PSsetwindowlevel, error setting window level (1000)
+drawrect[61361:707] _NSSetWindowTag, error clearing window tags (1000)
+drawrect[61361:707] _NSSetWindowTag, error setting window tags (1000)
+drawrect[61361:707] error [1000] getting window resolution
+drawrect[61361:707] Error [1000] setting resolution to 1
+drawrect[61361:707] _NSShapePlainWindowWithOpaqueRect: error setting window shape (1000)
+drawrect[61361:707] CGSAddSurface failed - error 1000 (windowID:4017)
+drawrect[61361:707] CGSAddSurface failed - error 1000 (windowID:4017)
+</code></p>
+
+<p>These errors are occuring because the app no longer has a connection to the window server since we have removed the <code>[NSApplication sharedApplication]</code> line, which connects the app to the window server.</p>
+
+<p>All we need to do is call <code>NSApplication.sharedApplication</code> and run the main event loop:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>app_delegate.rb <a href="https://github.com/chendo/drawrect/blob/master/app/app_delegate.rb">https://github.com/chendo/drawrect/blob/master/app/app_delegate.rb</a> </span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">def</span> <span class="nf">bootServer!</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;app = NSApplication.sharedApplication</span>
+</span><span class='line'><span class="sr">app.delegate = self</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">NSApp.run</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">def</span> <span class="nf">applicationDidFinishLaunching</span><span class="p">(</span><span class="n">notification</span><span class="p">)</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;DrawRect.new.listen</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And boom, everything works! <code>drawrect</code> is now a self-contained command line application that has the ability to create windows and doesn&rsquo;t have to reside in an app bundle.</p>
+
+<p>Check out the <code>drawrect</code> project at <a href="https://github.com/chendo/drawrect">https://github.com/chendo/drawrect</a> for a fully functioning example.</p>
+
+<p>Let me know if this has been useful to you!</p>
+]]></content>
+  </entry>
+  
+</feed>

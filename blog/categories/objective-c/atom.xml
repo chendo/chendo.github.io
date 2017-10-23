@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: objective-c | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/objective-c/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
+    <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
+    <updated>2013-09-30T14:01:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
+    <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
+
+<p>Xcode has the ability to break on all Objective-C exceptions (<code>Debug &gt; Breakpoints &gt; Create Exception Breakpoint...</code>), which is extremely useful as you can see the exception before the stack unwinds.</p>
+
+<p>However, enabling this option will cause Xcode to break whenever an exception occurs (even when inside a <code>@try/@catch</code> block), making it hard to track down the exception you&rsquo;re actually after when you&rsquo;re working with exception-heavy frameworks like CoreData or Accessibility. Also, Cocoa frameworks sometimes throws exceptions internally, which can be confusing as you wouldn&rsquo;t see an exception at your code otherwise.</p>
+
+<p>This was annoying me today while I was working on <a href="http://shortcatapp.com/">Shortcat</a> as Accessibility really likes throwing exceptions, so I wrote a <a href="https://gist.github.com/chendo/6759305">lldb script</a> that lets you easily specify what exceptions to ignore based on any selector on <code>NSException</code>. I based it off <a href="http://qwan.org/2013/06/18/how-to-snatch-the-error-code-from-the-trap-frame-in-xcode/">Rob Mayoff&rsquo;s <code>sniff_objc_exception_throw</code> script</a> as there wasn&rsquo;t really much in way of <code>lldb</code> documentation.</p>
+
+<h2>Setup</h2>
+
+<ul>
+<li>Grab the script from <a href="https://gist.github.com/chendo/6759305/raw/ignore_specified_objc_exceptions.py">here</a></li>
+<li>Put this script somewhere (eg. <code>~/Library/lldb/ignore_specified_objc_exceptions.py</code>)</li>
+<li>Add this to your <code>~/.lldbinit</code>:
+<code>command script import &lt;path to ignore_specified_objc_exceptions.py&gt;</code></li>
+</ul>
+
+
+<h4>But I&rsquo;m lazy!</h4>
+
+<p><code>bash for-the-lazy.sh
+mkdir -p ~/Library/lldb
+curl -L https://gist.github.com/chendo/6759305/raw/ignore_specified_objc_exceptions.py &gt; ~/Library/lldb/ignore_specified_objc_exceptions.py
+echo "command script import ~/Library/lldb/ignore_specified_objc_exceptions.py" &gt;&gt; ~/.lldbinit
+</code></p>
+
+<h2>Usage</h2>
+
+<ul>
+<li>In Xcode, add a breakpoint to catch all Objective-C exceptions</li>
+<li>Edit the breakpoint and add a Debugger Command with the following command:
+<code>ignore_specified_objc_exceptions name:NSAccessibilityException className:NSSomeException</code></li>
+<li>This will ignore exceptions where <code>NSException</code> <code>-name</code> matches <code>NSAccessibilityException</code> OR <code>-className</code> matches <code>NSSomeException</code></li>
+</ul>
+
+
+<p>It should look something like this:</p>
+
+<p><img src="http://f.cl.ly/items/3f3S3q3D2L0o1y2t0F2i/Screen%20Shot%202013-09-30%20at%202.52.39%20PM.png" alt="Screenshot" /></p>
+
+<p>Let me know if you have any issues!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Showing the Crash Dialog for Backgrounded Cocoa Apps]]></title>
+    <link href="http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps/"/>
+    <updated>2013-06-02T15:17:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps</id>
+    <content type="html"><![CDATA[<p>While developing <a href="http://shortcatapp.com">Shortcat</a>, I ran into an extremely annoying problem with <code>LSUIElement</code> apps: They crash silently, giving the user no indication that it has crashed. This is especially bad when you don&rsquo;t have any visual indicator that it&rsquo;s running.</p>
+
+<p>This <a href="http://stackoverflow.com/questions/10359966/crashreporter-dialog-doesnt-show-when-mac-app-crashes">post on StackOverflow</a> says that you can use <code>CrashReporterPrefs.app</code> to enable developer mode so it would show the dialog when a backgrounded app crashes. However, this is still a bad experience for end users.</p>
+
+<p>My first attempt at fixing this was to install my own signal handlers so it would bring the application into the foreground, remove the handler, then reraise the signal:</p>
+
+<p>```objc
+void BringAppToForeground()
+{</p>
+
+<pre><code>ProcessSerialNumber psn = { 0, kCurrentProcess };
+TransformProcessType(&amp;psn, kProcessTransformToForegroundApplication);
+</code></pre>
+
+<p>}</p>
+
+<p>void SignalHandler(int signal) {</p>
+
+<pre><code>NSLog(@"Signal caught: %d", signal);
+BringAppToForeground();
+
+// Restore default handler
+struct sigaction action;
+action.sa_handler = SIG_DFL;
+action.sa_flags = 0;
+sigemptyset(&amp;action.sa_mask);
+sigaction(signal, &amp;action, NULL);
+
+raise(signal);
+</code></pre>
+
+<p>}</p>
+
+<p>void InstallSignalHandlers()
+{</p>
+
+<pre><code>struct sigaction action;
+action.sa_handler = &amp;SignalHandler;
+action.sa_flags = 0;
+sigemptyset(&amp;action.sa_mask);
+
+sigaction(SIGABRT, &amp;action, NULL);
+sigaction(SIGILL, &amp;action, NULL);
+sigaction(SIGSEGV, &amp;action, NULL);
+sigaction(SIGFPE, &amp;action, NULL);
+sigaction(SIGBUS, &amp;action, NULL);
+sigaction(SIGTRAP, &amp;action, NULL);
+</code></pre>
+
+<p>}</p>
+
+<p>// Call InstallSignalHandlers while initialising the app
+```</p>
+
+<p>This worked well. When the app crashed, the dock icon showed up for a second, then the crash dialogue showed up.</p>
+
+<p>However, I noticed that the <a href="http://hockeyapp.net/">HockeyApp</a> crash reporting was no longer working, probably due to <code>PLCrashReporter</code> also using signal handlers for its own crash handling and I was overriding them.</p>
+
+<p>This is what I came up with:</p>
+
+<p>```objc
+void BringAppToForeground()
+{</p>
+
+<pre><code>ProcessSerialNumber psn = { 0, kCurrentProcess };
+TransformProcessType(&amp;psn, kProcessTransformToForegroundApplication);
+</code></pre>
+
+<p>}</p>
+
+<p>static int fatal_signals[] = {</p>
+
+<pre><code>SIGABRT,
+SIGBUS,
+SIGFPE,
+SIGILL,
+SIGSEGV,
+SIGTRAP
+</code></pre>
+
+<p>};</p>
+
+<p>static int n_fatal_signals = (sizeof(fatal_signals) / sizeof(fatal_signals[0]));
+static struct sigaction original_handlers[6]; // Must set this to the same number of fatal_signals</p>
+
+<p>void SignalHandler(int signal) {</p>
+
+<pre><code>BringAppToForeground();
+
+// Restore PLCrashreporter's handlers
+for (int i = 0; i&lt;n_fatal_signals; i++) {
+    sigaction(fatal_signals[i], &amp;original_handlers[i], NULL);
+}
+
+raise(signal);
+</code></pre>
+
+<p>}</p>
+
+<p>void InstallSignalHandlers()
+{</p>
+
+<pre><code>struct sigaction action;
+action.sa_handler = &amp;SignalHandler;
+action.sa_flags = 0;
+sigemptyset(&amp;action.sa_mask);
+
+struct sigaction default_action;
+default_action.sa_handler = SIG_DFL;
+default_action.sa_flags = 0;
+sigemptyset(&amp;default_action.sa_mask);
+
+
+// Store the original handlers
+struct sigaction original_handler;
+for (int i = 0; i&lt;n_fatal_signals; i++) {
+    if (sigaction(fatal_signals[i], NULL, &amp;original_handler) == 0) {
+        original_handlers[i] = original_handler;
+    }
+    else {
+        original_handlers[i] = default_action;
+    }
+    sigaction(fatal_signals[i], &amp;action, NULL);
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Ideally, it would be better if PLCrashReporter supported some sort of callback so you can perform your own actions before it crashes, but I&rsquo;d say a lot of people would try to call Objective-C code within it, making the crash handling not as reliable.</p>
+
+<p>Please let me know if there&rsquo;s ways to improve on this!</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,582 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Reverse engineering Xcode with dtrace - chendo</title>
+	<meta name="author" content="Jack 'chendo' Chen">
+
+	
+	<meta name="description" content="Oct 22nd, 2013 dtrace, process, xcode Reverse engineering Xcode with dtrace Both OS X and iOS tend to have a love-hate relationship with Xcode. &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="chendo" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">
+	<img src="http://www.gravatar.com/avatar/e2dc9b044425e2df0a07873b0b65693e?s=160" alt="Profile Picture" style="width: 160px" />
+</div>
+<hgroup>
+  <h1><a href="/">chendo</a></h1>
+</hgroup>
+
+<p class="subtitle">Jack Chen is a software engineer, gadget enthusiast and video gamer. Lives in Melbourne, Australia. Works on <a href="https://alt.com.au/">Alt</a> and creator of <a href="http://shortcatapp.com">Shortcat</a>.</p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/chendo" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/chendo" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-22T16:52:00+02:00" data-updated="true" itemprop="datePublished">Oct 22<span>nd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/dtrace/'>dtrace</a>, <a class='category' href='/blog/categories/process/'>process</a>, <a class='category' href='/blog/categories/xcode/'>xcode</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name">Reverse engineering Xcode with dtrace</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
+
+<p>For me, it is/<a href="https://github.com/chendo/FuzzyAutocompletePlugin">was</a> the lack of a good autocomplete that really ticks me off. Xcode&rsquo;s autocomplete is prefix-based, so Xcode will only show completions where the start of the completion matches your incomplete word. This is rather frustrating, as the prefix for completion items tends to be the same.</p>
+
+<p>For example, if you wanted to complete <code>NSAccessibilityRoleDescriptionForUIElement</code>, you&rsquo;d probably go:</p>
+
+<ul>
+<li><code>nsacc&lt;TAB&gt;</code> to get <code>NSAccessibility</code></li>
+<li><code>ro&lt;TAB&gt;</code> to get <code>NSAccessibilityRole</code></li>
+<li><code>des&lt;TAB&gt;</code> to get <code>NSAccessibilityRoleDescription</code></li>
+<li>and finally <code>f&lt;TAB&gt;</code> to get <code>NSAccessibilityRoleDescriptionForUIElement</code></li>
+</ul>
+
+
+<p>Of course, you can always use arrow keys to scroll through the list at some point to select it, but using arrow keys isn&rsquo;t a great solution.</p>
+
+<p>It would be great if Xcode supported fuzzy autocompletion (like Sublime Text, AppCode, etc etc). I mentioned this to <a href="https://twitter.com/alanjrogers">@alanjrogers</a> one Friday afternoon and he told me I should write an Xcode plugin for it.</p>
+
+<p>Why not?</p>
+
+<h2>Step 1: Making a plugin for Xcode 5</h2>
+
+<p>I found BlackDog Foundry&rsquo;s <a href="http://www.blackdogfoundry.com/blog/creating-an-xcode4-plugin/">Creating an Xcode 4 Plugin</a> which got me off to a good start where I was able to get code loaded into Xcode 5, with a couple of Xcode 5-specific <code>Info.plist</code> UUID tweaks from <a href="https://github.com/ricobeck/KFCocoaPodsPlugin">KFCocoaPodsPlugin</a>.</p>
+
+<h2>Step 2: Figure out what to hook into</h2>
+
+<p>With <code>class-dump</code>, I dumped <code>Xcode.app</code>&rsquo;s classes and started searching for likely places to hook into. I stumbled across the <code>DVTTextCompletion*</code> class cluster which was a good place to start. Before you can use the dumped headers, you need to remove the <code>- (void).cxx_destruct</code> method declaration if it exists. You also need to remove some <code>#import</code> statements that cause the build to fail, like <code>#import &lt;objc/NSObject.h&gt;</code> and <code>AppKit</code> imports.</p>
+
+<p>I added <code>JRSwizzle</code> with CocoaPods and started to poke at some classes I thought would be a good start, like <code>DVTTextCompletionSession</code>.</p>
+
+<p>Unfortunately, this didn&rsquo;t get me very far. Picking random methods to swizzle was a time consuming process which involved lots of restarting of Xcode. I needed a better way to figure out what I should hook into.</p>
+
+<p>Some googling turned up the <code>NSObjCMessageLoggingEnabled</code> environment variable, where it would log every message send to <code>/tmp/msgSend-&lt;pid&gt;</code>. Unfortunately, starting up Xcode generated about 15 million lines of data (a whopping <strong>659MB!!</strong>), so that clearly wasn&rsquo;t what I was after.</p>
+
+<h2><code>dtrace</code> to the rescue</h2>
+
+<p>I found a little <code>dtrace</code> snippet on <a href="http://stackoverflow.com/a/10749819/2860998">Stackoverflow</a> which would let you probe message sends of a certain class, which gave me a much better indication of what I should be looking at (after tracing <code>DVTTextCompletionSession</code>), however it only output the method calls without any context.</p>
+
+<p>Further googling turned up an article by Jon Haslam on <a href="https://blogs.oracle.com/jonh/entry/dtrace_and_visualisation">DTrace and Visualisation</a>, where he described using the <code>flowindent</code> option on <code>dtrace</code> to show a call tree. This was better, but it was limited to showing the method name only unless you used <code>printf</code> to show the class. It was messy and not ideal.</p>
+
+<p>I eventually found <a href="http://stackoverflow.com/a/16242756/2860998">this script</a> that essentially reimplemented <code>flowindent</code> but with a better visualisatino of Objective-C method calls.</p>
+
+<p>I modified it to provide better indentation and allow scoping down to a certain class. Script is below:</p>
+
+<figure class='code'><figcaption><span>trace_msg_send.sh</span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='d'><span class='line'><span class="err">#</span><span class="p">!/</span><span class="n">usr</span><span class="p">/</span><span class="n">sbin</span><span class="p">/</span><span class="n">dtrace</span> <span class="p">-</span><span class="n">s</span>
+</span><span class='line'><span class="err">#</span><span class="k">pragma</span> <span class="n">D</span> <span class="n">option</span> <span class="n">quiet</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">indention</span><span class="p">;</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">indentation_amount</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">BEGIN</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">indentation_amount</span> <span class="p">=</span> <span class="mi">4</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">objc</span><span class="p">$</span><span class="n">target</span><span class="p">:$</span><span class="mi">1</span><span class="p">::</span><span class="n">entry</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">method</span> <span class="p">=</span> <span class="p">(</span><span class="nb">string</span><span class="p">)&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>    <span class="n">type</span> <span class="p">=</span> <span class="n">probefunc</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+</span><span class='line'>    <span class="k">class</span> <span class="p">=</span> <span class="n">probemod</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%*s%s %c[%s %s]\n&quot;</span><span class="p">,</span> <span class="n">indention</span> <span class="p">*</span> <span class="n">indentation_amount</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="k">class</span><span class="p">,</span> <span class="n">method</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">indention</span><span class="p">++;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">objc</span><span class="p">$</span><span class="n">target</span><span class="p">:$</span><span class="mi">1</span><span class="p">::</span><span class="k">return</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">indention</span><span class="p">--;</span>
+</span><span class='line'>    <span class="n">method</span> <span class="p">=</span> <span class="p">(</span><span class="nb">string</span><span class="p">)&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>    <span class="n">type</span> <span class="p">=</span> <span class="n">probefunc</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+</span><span class='line'>    <span class="k">class</span> <span class="p">=</span> <span class="n">probemod</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%*s%s %c[%s %s]\n&quot;</span><span class="p">,</span> <span class="n">indention</span> <span class="p">*</span> <span class="n">indentation_amount</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&lt;-&quot;</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="k">class</span><span class="p">,</span> <span class="n">method</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Usage: <code>sudo ./trace_msg_send.sh -p &lt;pid of app&gt; &lt;objc class&gt;</code></p>
+
+<p>This produced a much better looking and easier to understand call tree:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">initWithTextView:atLocation:cursorLocation:</span><span class="p">]</span>
+</span><span class='line'><span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">initWithTextView:atLocation:cursorLocation:</span><span class="p">]</span>
+</span><span class='line'><span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">showCompletionsExplicitly:</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">isShowingCompletions</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">isShowingCompletions</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">_ensureCompletionsUpToDate</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">_ensureCompletionsUpToDate</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">setPendingRequestState:</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">readyToShowCompletions</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">filteredCompletionsAlpha</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">filteredCompletionsAlpha</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">readyToShowCompletions</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">showCompletionsExplicitly:</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">isShowingCompletions</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">isShowingCompletions</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">setAllCompletions:</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">setAllCompletions:</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">_prefixForCurrentLocation</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">textView</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">_prefixForCurrentLocation</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">_setFilteringPrefix:forceFilter:</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">allCompletions</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="n">allCompletions</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">_bestMatchInSortedArray:usingPrefix:</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">_bestMatchInSortedArray:usingPrefix:</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">_usefulPartialCompletionPrefixForItems:selectedIndex:filteringPrefix:</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">_commonPrefixForItems:</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">rangeOfFirstWordInString:</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionSession</span> <span class="nl">rangeOfFirstWordInString:</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>A quick breakdown of a <code>dtrace</code> probe</h4>
+
+<p>A <code>dtrace</code> probe is defined by <code>provider:module:function:name</code>. In the above script, I use <code>objc$target:$1::entry</code>. <code>$target</code> is a macro variable which is filled in by <code>pid</code> passed in by the command line via the <code>-p</code> flag. <code>$1</code>, <code>$2</code> and so forth are the arguments passed into <code>dtrace</code>.</p>
+
+<p>Example: <code>sudo ./trace_msg_send.sh -p 12345 DVTTextCompletionSession</code></p>
+
+<ul>
+<li>Provider: objc12345</li>
+<li>Module: DVTTextCompletionSession</li>
+<li>Function: [everything]</li>
+<li>Name: entry</li>
+</ul>
+
+
+<p>This will match all method entry events within <code>DVTTextCompletionSession</code> for pid 12345.</p>
+
+<p><code>dtrace</code> supports wildcards: <code>*</code> for multiple characters, <code>?</code> for a single character.</p>
+
+<p>For a more detailed rundown on <code>dtrace</code>, see <a href="http://blog.bignerdranch.com/1907-hooked-on-dtrace-part-1/">Hooked on DTrace</a></p>
+
+<h2>Step 3: Find out what Xcode is doing</h2>
+
+<p>A quick swizzle of <code>setAllCompletions:</code> showed that Xcode sets the completion list to whatever is autocompletable at a particular scope. On a new line, it would set all the constants, C methods, macros, etc etc, which ended to be about 40,000. When autocompleting on <code>[self</code> on one of my plugin classes, it set the completion list to a much more managable 278.</p>
+
+<p>After some digging, I found that <code>_setFilteringPrefix:forceFilter:</code> did what I expected and was called every time the user typed. A few hours of trial and error later, I managed to hook up Xcode&rsquo;s own <code>IDEOpenQuicklyPattern</code> class to perform fuzzy filtering of the completions, but I still relied on calling the original fuzzy matching method because otherwise the autocompletion list window would not update correctly. This was adding 30-50ms of execution time on the main thread, which is not ideal, so the next step is to figure out what Xcode is doing behind the scenes to update this.</p>
+
+<p><code>DVTTextCompletionListWindowController</code> is probably what I wanted to look at, but using the same script wasn&rsquo;t useful as it was filled with <code>-[DVTTextCompletionListWindowController tableView:objectValueForTableColumn:row:]</code> calls, and it was missing a return call so the indentation kept growing.</p>
+
+<p>I wrote another script that let me filter out the method calls I didn&rsquo;t want polluting my trace, and added the ability to only trace message sends within a certain method.</p>
+
+<figure class='code'><figcaption><span>trace_within_method_and_filter.sh</span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+</pre></td><td class='code'><pre><code class='d'><span class='line'><span class="err">#</span><span class="p">!/</span><span class="n">usr</span><span class="p">/</span><span class="n">sbin</span><span class="p">/</span><span class="n">dtrace</span> <span class="p">-</span><span class="n">s</span>
+</span><span class='line'><span class="err">#</span><span class="k">pragma</span> <span class="n">D</span> <span class="n">option</span> <span class="n">quiet</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">indention</span><span class="p">;</span>
+</span><span class='line'><span class="kt">int</span> <span class="n">indentation_amount</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">BEGIN</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">indentation_amount</span> <span class="p">=</span> <span class="mi">4</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/* the : in method selectors must be replaced with ? */</span>
+</span><span class='line'><span class="n">objc</span><span class="p">$</span><span class="n">target</span><span class="p">:</span><span class="n">DVTTextCompletionSession</span><span class="p">:-</span><span class="n">_setFilteringPrefix</span><span class="p">?</span><span class="n">forceFilter</span><span class="p">?:</span><span class="n">entry</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">tracing</span><span class="p">++;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">objc</span><span class="p">$</span><span class="n">target</span><span class="p">:</span><span class="n">DVTTextCompletionSession</span><span class="p">:-</span><span class="n">_setFilteringPrefix</span><span class="p">?</span><span class="n">forceFilter</span><span class="p">?:</span><span class="k">return</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">tracing</span><span class="p">--;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">objc</span><span class="p">$</span><span class="n">target</span><span class="p">:</span><span class="n">DVTTextCompletionList</span><span class="p">*::</span><span class="n">entry</span>
+</span><span class='line'><span class="p">/</span>
+</span><span class='line'>    <span class="n">tracing</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>    <span class="p">&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">!=</span> <span class="s">&quot;tableView:willDisplayCell:forTableColumn:row:&quot;</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>    <span class="p">&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">!=</span> <span class="s">&quot;tableView:objectValueForTableColumn:row:&quot;</span>
+</span><span class='line'><span class="p">/</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">method</span> <span class="p">=</span> <span class="p">(</span><span class="nb">string</span><span class="p">)&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>    <span class="n">type</span> <span class="p">=</span> <span class="n">probefunc</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+</span><span class='line'>    <span class="k">class</span> <span class="p">=</span> <span class="n">probemod</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%lu %*s%s %c[%s %s]\n&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">indention</span> <span class="p">*</span> <span class="n">indentation_amount</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="k">class</span><span class="p">,</span> <span class="n">method</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">indention</span><span class="p">++;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">objc</span><span class="p">$</span><span class="n">target</span><span class="p">:</span><span class="n">DVTTextCompletionList</span><span class="p">*::</span><span class="k">return</span>
+</span><span class='line'><span class="p">/</span>
+</span><span class='line'>    <span class="n">tracing</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>    <span class="p">&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">!=</span> <span class="s">&quot;tableView:willDisplayCell:forTableColumn:row:&quot;</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>    <span class="p">&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">!=</span> <span class="s">&quot;tableView:objectValueForTableColumn:row:&quot;</span>
+</span><span class='line'><span class="p">/</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">indention</span><span class="p">--;</span>
+</span><span class='line'>    <span class="n">method</span> <span class="p">=</span> <span class="p">(</span><span class="nb">string</span><span class="p">)&amp;</span><span class="n">probefunc</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>    <span class="n">type</span> <span class="p">=</span> <span class="n">probefunc</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+</span><span class='line'>    <span class="k">class</span> <span class="p">=</span> <span class="n">probemod</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;%lu %*s%s %c[%s %s]\n&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">indention</span> <span class="p">*</span> <span class="n">indentation_amount</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&lt;-&quot;</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="k">class</span><span class="p">,</span> <span class="n">method</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I added timestamps to the result because the output kept ending out of order.</p>
+
+<p>I ran with <code>sudo ./trace_within_method_and_filter.sh -p</code>pidof xcode<code>&gt; output.txt</code>, then fixed the order and removed timestamps with <code>cat output.txt | sort -n | cut -c 17-200</code>.</p>
+
+<p>Output with calls to stuff to properties (<code>window</code>, <code>session</code>, and <code>showingWindow</code>) with no inner method calls removed for brevity:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">initWithSession:</span><span class="p">]</span>
+</span><span class='line'><span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">initWithSession:</span><span class="p">]</span>
+</span><span class='line'><span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">showWindowForTextFrame:explicitAnimation:</span><span class="p">]</span>
+</span><span class='line'>    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">window</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">windowDidLoad</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_loadColorsFromCurrentTheme</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_iconShadow</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_iconShadow</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">numberOfRowsInTableView:</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">numberOfRowsInTableView:</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">windowDidLoad</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">window</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">numberOfRowsInTableView:</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">numberOfRowsInTableView:</span><span class="p">]</span>
+</span><span class='line'>        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateSelectedRow</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">tableViewSelectionDidChange:</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateSelectedRow</span><span class="p">]</span>
+</span><span class='line'>            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateCurrentDisplayState</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">_getTitleColumnWidth:typeColumnWidth:</span><span class="p">]</span>
+</span><span class='line'>                    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">_preferredWindowFrameForTextFrame:columnsWidth:titleColumnX:</span><span class="p">]</span>
+</span><span class='line'>                    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">_preferredWindowFrameForTextFrame:columnsWidth:titleColumnX:</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateCurrentDisplayState</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateSelectedRow</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">setHideReason:</span><span class="p">]</span>
+</span><span class='line'>                    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_usefulPrefixAttributes</span><span class="p">]</span>
+</span><span class='line'>                    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_usefulPrefixAttributes</span><span class="p">]</span>
+</span><span class='line'>                    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateInfoNewSelection</span><span class="p">]</span>
+</span><span class='line'>                        <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">showInfoForSelectedCompletionItem</span><span class="p">]</span>
+</span><span class='line'>                            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_selectedCompletionItem</span><span class="p">]</span>
+</span><span class='line'>                            <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_selectedCompletionItem</span><span class="p">]</span>
+</span><span class='line'>                            <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">showInfoPaneForCompletionItem:</span><span class="p">]</span>
+</span><span class='line'>                                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_selectedCompletionItem</span><span class="p">]</span>
+</span><span class='line'>                                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_selectedCompletionItem</span><span class="p">]</span>
+</span><span class='line'>                                <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_updateCurrentDisplayStateForQuickHelp</span><span class="p">]</span>
+</span><span class='line'>                                    <span class="o">-&gt;</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_usefulPrefixAttributes</span><span class="p">]</span>
+</span><span class='line'>                                    <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">_usefulPrefixAttributes</span><span class="p">]</span>
+</span><span class='line'>                                <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">showInfoPaneForCompletionItem:</span><span class="p">]</span>
+</span><span class='line'>                            <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="n">showInfoForSelectedCompletionItem</span><span class="p">]</span>
+</span><span class='line'>                        <span class="o">&lt;-</span> <span class="o">-</span><span class="p">[</span><span class="n">DVTTextCompletionListWindowController</span> <span class="nl">showWindowForTextFrame:explicitAnimation:</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The call stack is missing some return traces and I&rsquo;m not sure why yet, but we&rsquo;ve found some relevant methods: <code>_updateCurrentDisplayState</code> and <code>_updateSelectedRow</code>. I wasn&rsquo;t having issues with the row updating, so I grabbed a reference to <code>DVTTextCompletionListWindowController</code> with <code>[self _listWindowController]</code> and call <code>-_updateCurrentDisplayState</code>. This solved the display issue!</p>
+
+<p><code>dtrace</code> is pretty awesome, but editing <code>dtrace</code> scripts was annoying. If I have to do more of this, I&rsquo;d probably write a wrapper using <a href="https://github.com/chrisa/ruby-dtrace">ruby-dtrace</a> to help automate filtering etc.</p>
+
+<h1>FuzzyAutocomplete Plugin for Xcode</h1>
+
+<p>The end product is <a href="https://github.com/chendo/FuzzyAutocompletePlugin">FuzzyAutocomplete</a> (<a href="https://github.com/chendo/FuzzyAutocompletePlugin">github.com/chendo/FuzzyAutocompletePlugin</a>), which works in Xcode 5. It shouldn&rsquo;t conflict with any existing plugins like <a href="https://github.com/ksuther/KSImageNamed-Xcode">KSImageNamed</a> as most plugins expose additional completion items rather than change the filtering.</p>
+
+<p>You can install it with <a href="http://mneorr.github.io/Alcatraz/">Alcatraz</a> or by cloning it and building it yourself. See the <a href="https://github.com/chendo/FuzzyAutocompletePlugin">project on Github</a> for more info.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2017 - Jack 'chendo' Chen -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'chendo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/';
+        var disqus_url = 'http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-110306-6']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

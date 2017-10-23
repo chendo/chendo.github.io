@@ -1,0 +1,265 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Running individual specs with RubyMotion - chendo</title>
+	<meta name="author" content="Jack 'chendo' Chen">
+
+	
+	<meta name="description" content="Jun 3rd, 2013 ruby, rubymotion, Running individual specs with RubyMotion I&rsquo;m testing parts of Shortcat (which as of v0.4.0 is in Objective-C) &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="chendo" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">
+	<img src="http://www.gravatar.com/avatar/e2dc9b044425e2df0a07873b0b65693e?s=160" alt="Profile Picture" style="width: 160px" />
+</div>
+<hgroup>
+  <h1><a href="/">chendo</a></h1>
+</hgroup>
+
+<p class="subtitle">Jack Chen is a software engineer, gadget enthusiast and video gamer. Lives in Melbourne, Australia. Works on <a href="https://alt.com.au/">Alt</a> and creator of <a href="http://shortcatapp.com">Shortcat</a>.</p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/chendo" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/chendo" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-03T20:59:00+02:00" data-updated="true" itemprop="datePublished">Jun 3<span>rd</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/rubymotion/'>rubymotion,</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name">Running individual specs with RubyMotion</h1>
+	<div class="entry-content" itemprop="articleBody"><p>I&rsquo;m testing parts of <a href="http://shortcatapp.com/">Shortcat</a> (which as of v0.4.0 is in Objective-C) with <a href="http://www.rubymotion.com/">RubyMotion</a>, which is pretty nifty since I&rsquo;m much more comfortable in Ruby than Objective-C and writing tests is way easier in Ruby. However, it&rsquo;s far from the fully-featured <a href="http://rspec.info/">RSpec</a> like I&rsquo;m used to.</p>
+
+<p>When working on a class, I like to only run specs for that particular file to keep the runtimes down, then run all the specs later. In RubyMotion, you can achieve this with:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>rake spec <span class="nv">files</span><span class="o">=</span>foo_spec,spec/bar_spec.rb
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(via <a href="http://www.rubymotion.com/developer-center/articles/testing/#_run_selected_spec_files">http://www.rubymotion.com/developer-center/articles/testing/#_run_selected_spec_files</a></p>
+
+<p>However, I couldn&rsquo;t see any obvious way to run individual specs, which is useful when trying to focus on a particular spec. So I dug into the <code>spec.rb</code> in <code>/Library/RubyMotion/lib/motion/</code>, which seems to be just a copy of <a href="https://github.com/alloy/MacBacon">MacBacon</a>, and found this:</p>
+
+<figure class='code'><figcaption><span>/Library/RubyMotion/lib/motion/bacon.rb</span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">Bacon</span>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="no">RestrictName</span>    <span class="o">=</span> <span class="sr">//</span>  <span class="k">unless</span> <span class="n">defined?</span> <span class="no">RestrictName</span>
+</span><span class='line'>  <span class="no">RestrictContext</span> <span class="o">=</span> <span class="sr">//</span>  <span class="k">unless</span> <span class="n">defined?</span> <span class="no">RestrictContext</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="no">Backtraces</span> <span class="o">=</span> <span class="kp">true</span>  <span class="k">unless</span> <span class="n">defined?</span> <span class="no">Backtraces</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<!--more-->
+
+
+<p>After checking the <code>it</code> function around line 503 (it may be different on yours), the name of the spec is regex matched against <code>RestrictName</code> and if it matches, it runs the spec. Unfortunately, <code>RestrictContext</code> isn&rsquo;t used yet but there&rsquo;s a <code>TODO</code> for it there. I tried uncommenting the line, but it seems to just hang for me and given I don&rsquo;t really care for it, I haven&rsquo;t looked into it further.</p>
+
+<p>I came up with a bit of code that lets you filter by spec name when running <code>rake spec</code>. I also added support for <code>RestrictContext</code> for when that gets implemented, as well as the ability to hide the backtrace. Place this in <code>spec/helpers/spec_options.rb</code>:</p>
+
+<div><script src='https://gist.github.com/5697551.js'></script>
+<noscript><pre><code>def silence_warnings(&amp;block)
+  warn_level = $VERBOSE
+  $VERBOSE = nil
+  begin
+    result = block.call
+  ensure
+    $VERBOSE = warn_level
+  end
+  result
+end
+ 
+silence_warnings do
+  module Bacon
+    if ENV[&#39;filter&#39;]
+      $stderr.puts &quot;Filtering specs that match: #{ENV[&#39;filter&#39;]}&quot;
+      RestrictName = Regexp.new(ENV[&#39;filter&#39;])
+    end
+ 
+    if ENV[&#39;filter_context&#39;]
+      $stderr.puts &quot;Filtering contexts that match: #{ENV[&#39;filter_context&#39;]}&quot;
+      RestrictContext = Regexp.new(ENV[&#39;filter_context&#39;])
+    end
+ 
+    Backtraces = false if ENV[&#39;hide_backtraces&#39;]
+  end
+end</code></pre></noscript></div>
+
+
+<p>Usage:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>rake spec <span class="nv">filter</span><span class="o">=</span><span class="s2">&quot;name of spec&quot;</span>                   <span class="c"># To filter by spec name</span>
+</span><span class='line'><span class="nv">$ </span>rake spec <span class="nv">files</span><span class="o">=</span>foo_spec <span class="nv">filter</span><span class="o">=</span><span class="s2">&quot;name of spec&quot;</span>
+</span><span class='line'><span class="nv">$ </span>rake spec <span class="nv">filter_context</span><span class="o">=</span><span class="s2">&quot;this doesn&#39;t work yet&quot;</span>  <span class="c"># To filter by context name (doesn&#39;t work until MacBacon implements it)</span>
+</span><span class='line'><span class="nv">$ </span>rake spec <span class="nv">hide_backtraces</span><span class="o">=</span>yes                     <span class="c"># Hide backtraces</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Hope this helps!</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2017 - Jack 'chendo' Chen -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'chendo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/';
+        var disqus_url = 'http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-110306-6']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: sublime text | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/sublime-text/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Editing files on a remote server with Sublime Text 2]]></title>
+    <link href="http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2/"/>
+    <updated>2013-09-16T12:57:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve always hated editing files on a remote machine over SSH. I&rsquo;m not a huge fan of vim, and nano is terrible for anything remotely (hah, get it?) complex.</p>
+
+<p>Being able to use your local editor with all your plugins and everything all set up would be ideal. However, each solution tends to have its caveats.</p>
+
+<h1>SFTP</h1>
+
+<p>You can use SFTP to access the server with an app like <a href="http://panic.com/transmit">Transmit</a> and then editing the file.</p>
+
+<h2>Pros</h2>
+
+<ul>
+<li>Easiest solution</li>
+<li>Able to browse directory tree</li>
+</ul>
+
+
+<h2>Cons</h2>
+
+<ul>
+<li>Generally limited to your user &ndash; editing root-owned files requires logging in as root</li>
+<li>Non-ideal workflow &ndash; switch out of the shell to navigate to the file in the app</li>
+</ul>
+
+
+<h1>SSHFS/FUSE</h1>
+
+<p>You can mount a server over SSH with something like <a href="http://osxfuse.github.io">FUSE for OS X</a>, then editing the file by navigating the mounted filesystem.</p>
+
+<h2>Pros</h2>
+
+<ul>
+<li>Able to browse directory tree</li>
+<li>Fairly easy to set up</li>
+</ul>
+
+
+<h2>Cons</h2>
+
+<ul>
+<li>Generally limited to your user &ndash; editing root-owned files is difficult</li>
+<li>Can be slow &ndash; Finder tends to enumerate metadata you don&rsquo;t care about</li>
+<li>Non-ideal workflow &ndash; switch out of the shell to navigate to the file in the app</li>
+</ul>
+
+
+<h1>rsub</h1>
+
+<p><a href="https://github.com/Drarok/rsub"><code>rsub</code></a> is a package for Sublime Text 2 which is a port of <code>rmate</code> functionality in Textmate 2. It utilises a script installed on the remote machine which communicates with your local machine over a remote forwarded port.</p>
+
+<h2>Pros</h2>
+
+<ul>
+<li>Ideal workflow &ndash; initiate file editing from shell</li>
+<li>Usable with sudo &ndash; <code>sudo rsub /etc/nginx/conf/nginx.conf</code> works!</li>
+</ul>
+
+
+<h2>Cons</h2>
+
+<ul>
+<li>More effort to set up &ndash; <code>rsub</code> needs to be installed on each machine</li>
+<li>Not ideal for servers where untrusted users have access</li>
+</ul>
+
+
+<h2>Setting up <code>rsub</code></h2>
+
+<p>Please note that the <code>rsub</code> package only supports Sublime Text 2 at this point.</p>
+
+<ol>
+  <li>
+    Install <code>rsub</code> with <a href="http://wbond.net/sublime_packages/package_control">Package Control</a>
+  </li>
+  <li>Set up ssh port forwarding:
+    <ul>
+      <li>
+        You need to set up a remote forward on port <code>52698</code> (by default)
+      </li>
+      <li>
+        You can do it every time you log in:
+
+<div class='bogus-wrapper'><notextile><figure class='code'><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>ssh username@server -R 52698:localhost:52698
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+      </li>
+      <li>
+        Or you can configure <code>.ssh/config</code>:
+
+<div class='bogus-wrapper'><notextile><figure class='code'><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='plain'><span class='line'># You should only do this for servers that you only have
+</span><span class='line'># access to as anyone on the server can connect to your machine
+</span><span class='line'>Host *.my-company.com
+</span><span class='line'>  RemoteForward 52698 127.0.0.1:52698</span></code></pre></td></tr></table></div></figure></notextile></div>
+      </li>
+    </ul>
+  </li>
+  <li>
+    Install the <code>rsub</code> remote script on your server:
+<div class='bogus-wrapper'><notextile><figure class='code'><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c"># aurora&#39;s fork of rmate is a bash script that only works with Linux servers.</span>
+</span><span class='line'><span class="c"># See https://github.com/textmate/rmate for a ruby version</span>
+</span><span class='line'>sudo wget -O /usr/local/bin/rsub https://raw.github.com/aurora/rmate/master/rmate
+</span><span class='line'>sudo chmod +x /usr/local/bin/rsub
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+  </li>
+  <li>
+    Use it!
+<div class='bogus-wrapper'><notextile><figure class='code'><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>sudo rsub /etc/nginx/conf/nginx.conf
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+  </li>
+</ol>
+
+
+
+]]></content>
+  </entry>
+  
+</feed>

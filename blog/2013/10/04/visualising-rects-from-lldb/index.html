@@ -1,0 +1,243 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Visualising CGRects and NSRects from lldb with drawrect - chendo</title>
+	<meta name="author" content="Jack 'chendo' Chen">
+
+	
+	<meta name="description" content="Oct 4th, 2013 lldb, tools Visualising CGRects and NSRects from lldb with drawrect Halfway through debugging the new enumeration engine for Shortcat &hellip;">
+	
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/atom.xml" rel="alternate" title="chendo" type="application/atom+xml">
+	
+	<link rel="canonical" href="http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/">
+	<link href="/favicon.png" rel="shortcut icon">
+	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
+	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+</head>
+
+
+<body>
+	<div class="container">
+		<div class="left-col">
+			<div class="intrude-less">
+			<header id="header" class="inner"><div class="profilepic">
+	<img src="http://www.gravatar.com/avatar/e2dc9b044425e2df0a07873b0b65693e?s=160" alt="Profile Picture" style="width: 160px" />
+</div>
+<hgroup>
+  <h1><a href="/">chendo</a></h1>
+</hgroup>
+
+<p class="subtitle">Jack Chen is a software engineer, gadget enthusiast and video gamer. Lives in Melbourne, Australia. Works on <a href="https://alt.com.au/">Alt</a> and creator of <a href="http://shortcatapp.com">Shortcat</a>.</p>
+<nav id="main-nav"><ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+</nav>
+<nav id="sub-nav">
+	<div class="social">
+		
+		
+		
+		<a class="twitter" href="http://twitter.com/chendo" title="Twitter">Twitter</a>
+		
+		
+		<a class="github" href="https://github.com/chendo" title="GitHub">GitHub</a>
+		
+		
+		
+		
+		
+		
+		
+		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
+		
+	</div>
+</nav>
+</header>				
+			</div>
+		</div>	
+		<div class="mid-col">
+			
+				
+			
+			<div class="mid-col-container">
+				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+	<div class="meta">
+		<div class="date">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-04T16:38:00+02:00" data-updated="true" itemprop="datePublished">Oct 4<span>th</span>, 2013</time></div>
+		<div class="tags">
+
+
+	<a class='category' href='/blog/categories/lldb/'>lldb</a>, <a class='category' href='/blog/categories/tools/'>tools</a>
+
+
+</div>
+		
+	</div>
+	<h1 class="title" itemprop="name">Visualising CGRects and NSRects from lldb with drawrect</h1>
+	<div class="entry-content" itemprop="articleBody"><p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
+
+<p>I decided to write a tool to solve this problem. I also took the chance to actually develop an app with <a href="http://rubymotion.com">RubyMotion</a>.</p>
+
+<h2>Introducing <code>drawrect</code></h2>
+
+<p><a href="https://github.com/chendo/drawrect"><code>drawrect</code></a> is a command line tool for OS X that simply draws translucent rectangles on the screen.</p>
+
+<p><img src="https://github.com/chendo/drawrect/raw/master/screenshot.png" alt="Screenshot" /></p>
+
+<p>You can use it from within <code>lldb</code> (provided you installed the scripts) or from the command line.</p>
+
+<h2>Usage</h2>
+
+<h4>Within <code>lldb</code></h4>
+
+<figure class='code'><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='plain'><span class='line'>dr &lt;rect expression&gt;     # This will get the string representation of
+</span><span class='line'>                         # the rect returned by the expression and draw it
+</span><span class='line'>
+</span><span class='line'>dr window.frame          # This will draw a rect of the window's frame
+</span><span class='line'>
+</span><span class='line'>drf &lt;rect expression&gt;    # This is the same as above, but where the origin
+</span><span class='line'>                         # of the rect is from the top left
+</span><span class='line'>
+</span><span class='line'>dc                       # Removes all the rects</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Command line</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>drawrect rect &lt;rect&gt; <span class="o">[</span>label<span class="o">]</span> <span class="o">[</span>colour<span class="o">]</span> <span class="o">[</span>opacity<span class="o">]</span>           <span class="c"># Draws a rect at &lt;rect&gt; coordinates with [label], background colour in hex [colour] with opacity [opacity]</span>
+</span><span class='line'>drawrect flipped_rect &lt;rect&gt; <span class="o">[</span>label<span class="o">]</span> <span class="o">[</span>colour<span class="o">]</span> <span class="o">[</span>opacity<span class="o">]</span>   <span class="c"># Same as above, but from top-left origin</span>
+</span><span class='line'>
+</span><span class='line'>drawrect rect 100,100,100,100 Hello 00ff00 0.3            <span class="c"># Draws a rect at origin 100,100 with size 100,100, text &quot;Hello&quot;, translucent green background</span>
+</span><span class='line'>drawrect clear     <span class="c"># Clears rect</span>
+</span><span class='line'>drawrect quit      <span class="c"># Quits the drawrect process</span>
+</span><span class='line'>drawrect <span class="nb">help</span>      <span class="c"># Shows help</span>
+</span><span class='line'>drawrect version   <span class="c"># Shows version</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Future improvements</h2>
+
+<p>I couldn&rsquo;t find a way to hook into process termination or resuming in <code>lldb</code>, so you would have to clear the rects manually with <code>drc</code> in <code>lldb</code>. If someone knows how to do this, please let me know in the comments!</p>
+
+<p>I&rsquo;d like to add a feature where you could hover over a <code>CGRect</code> or <code>NSRect</code> in the Variable view and it would highlight, but I&rsquo;m not sure how to do this without resorting to Accessibility.</p>
+
+<p>I hope <code>drawrect</code> is useful to others! Let me know if this has been useful to you.</p>
+</div>
+
+</article>
+
+	<div class="share">
+	<div class="addthis_toolbox addthis_default_style ">
+	
+	
+	<a class="addthis_button_tweet"></a>
+	
+	
+	<a class="addthis_counter addthis_pill_style"></a>
+	</div>
+  <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid="></script>
+</div>
+
+
+
+<section id="comment">
+    <h1 class="title">Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+</section>
+</div>
+			</div>
+			<footer id="footer" class="inner"><p>
+  Copyright &copy; 2017 - Jack 'chendo' Chen -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
+			<script src="/javascripts/slash.js"></script>
+<script src="/javascripts/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+	$('.fancybox').fancybox();
+})(jQuery);
+</script> <!-- Delete or comment this line to disable Fancybox -->
+
+
+<script type="text/javascript">
+      var disqus_shortname = 'chendo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/';
+        var disqus_url = 'http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-110306-6']);
+		_gaq.push(['_trackPageview']);
+
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+
+
+
+
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: cocoa | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/cocoa/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Showing the Crash Dialog for Backgrounded Cocoa Apps]]></title>
+    <link href="http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps/"/>
+    <updated>2013-06-02T15:17:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps</id>
+    <content type="html"><![CDATA[<p>While developing <a href="http://shortcatapp.com">Shortcat</a>, I ran into an extremely annoying problem with <code>LSUIElement</code> apps: They crash silently, giving the user no indication that it has crashed. This is especially bad when you don&rsquo;t have any visual indicator that it&rsquo;s running.</p>
+
+<p>This <a href="http://stackoverflow.com/questions/10359966/crashreporter-dialog-doesnt-show-when-mac-app-crashes">post on StackOverflow</a> says that you can use <code>CrashReporterPrefs.app</code> to enable developer mode so it would show the dialog when a backgrounded app crashes. However, this is still a bad experience for end users.</p>
+
+<p>My first attempt at fixing this was to install my own signal handlers so it would bring the application into the foreground, remove the handler, then reraise the signal:</p>
+
+<p>```objc
+void BringAppToForeground()
+{</p>
+
+<pre><code>ProcessSerialNumber psn = { 0, kCurrentProcess };
+TransformProcessType(&amp;psn, kProcessTransformToForegroundApplication);
+</code></pre>
+
+<p>}</p>
+
+<p>void SignalHandler(int signal) {</p>
+
+<pre><code>NSLog(@"Signal caught: %d", signal);
+BringAppToForeground();
+
+// Restore default handler
+struct sigaction action;
+action.sa_handler = SIG_DFL;
+action.sa_flags = 0;
+sigemptyset(&amp;action.sa_mask);
+sigaction(signal, &amp;action, NULL);
+
+raise(signal);
+</code></pre>
+
+<p>}</p>
+
+<p>void InstallSignalHandlers()
+{</p>
+
+<pre><code>struct sigaction action;
+action.sa_handler = &amp;SignalHandler;
+action.sa_flags = 0;
+sigemptyset(&amp;action.sa_mask);
+
+sigaction(SIGABRT, &amp;action, NULL);
+sigaction(SIGILL, &amp;action, NULL);
+sigaction(SIGSEGV, &amp;action, NULL);
+sigaction(SIGFPE, &amp;action, NULL);
+sigaction(SIGBUS, &amp;action, NULL);
+sigaction(SIGTRAP, &amp;action, NULL);
+</code></pre>
+
+<p>}</p>
+
+<p>// Call InstallSignalHandlers while initialising the app
+```</p>
+
+<p>This worked well. When the app crashed, the dock icon showed up for a second, then the crash dialogue showed up.</p>
+
+<p>However, I noticed that the <a href="http://hockeyapp.net/">HockeyApp</a> crash reporting was no longer working, probably due to <code>PLCrashReporter</code> also using signal handlers for its own crash handling and I was overriding them.</p>
+
+<p>This is what I came up with:</p>
+
+<p>```objc
+void BringAppToForeground()
+{</p>
+
+<pre><code>ProcessSerialNumber psn = { 0, kCurrentProcess };
+TransformProcessType(&amp;psn, kProcessTransformToForegroundApplication);
+</code></pre>
+
+<p>}</p>
+
+<p>static int fatal_signals[] = {</p>
+
+<pre><code>SIGABRT,
+SIGBUS,
+SIGFPE,
+SIGILL,
+SIGSEGV,
+SIGTRAP
+</code></pre>
+
+<p>};</p>
+
+<p>static int n_fatal_signals = (sizeof(fatal_signals) / sizeof(fatal_signals[0]));
+static struct sigaction original_handlers[6]; // Must set this to the same number of fatal_signals</p>
+
+<p>void SignalHandler(int signal) {</p>
+
+<pre><code>BringAppToForeground();
+
+// Restore PLCrashreporter's handlers
+for (int i = 0; i&lt;n_fatal_signals; i++) {
+    sigaction(fatal_signals[i], &amp;original_handlers[i], NULL);
+}
+
+raise(signal);
+</code></pre>
+
+<p>}</p>
+
+<p>void InstallSignalHandlers()
+{</p>
+
+<pre><code>struct sigaction action;
+action.sa_handler = &amp;SignalHandler;
+action.sa_flags = 0;
+sigemptyset(&amp;action.sa_mask);
+
+struct sigaction default_action;
+default_action.sa_handler = SIG_DFL;
+default_action.sa_flags = 0;
+sigemptyset(&amp;default_action.sa_mask);
+
+
+// Store the original handlers
+struct sigaction original_handler;
+for (int i = 0; i&lt;n_fatal_signals; i++) {
+    if (sigaction(fatal_signals[i], NULL, &amp;original_handler) == 0) {
+        original_handlers[i] = original_handler;
+    }
+    else {
+        original_handlers[i] = default_action;
+    }
+    sigaction(fatal_signals[i], &amp;action, NULL);
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Ideally, it would be better if PLCrashReporter supported some sort of callback so you can perform your own actions before it crashes, but I&rsquo;d say a lot of people would try to call Objective-C code within it, making the crash handling not as reliable.</p>
+
+<p>Please let me know if there&rsquo;s ways to improve on this!</p>
+]]></content>
+  </entry>
+  
+</feed>

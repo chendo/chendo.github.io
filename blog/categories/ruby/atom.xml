@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Python-like docstrings in Ruby!]]></title>
+    <link href="http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/"/>
+    <updated>2013-07-07T14:46:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby</id>
+    <content type="html"><![CDATA[<p>About six months ago, I watched Peter Cooper&rsquo;s <a href="http://rubyreloaded.com/trickshots">Ruby Trickshots</a> and learnt that Ruby has an interesting syntax that allows you to concatenate strings by simply placing them after each other.</p>
+
+<p>For example:</p>
+
+<p><code>ruby
+"foo" "bar" # =&gt; "foobar"
+</code></p>
+
+<p>I quickly realised that that meant that this was valid syntax:</p>
+
+<p><code>ruby
+"""foo"""   # =&gt; "foo"
+</code></p>
+
+<p>Which meant that Python-like docstrings were syntactically valid in Ruby!</p>
+
+<p>I hacked up a bit of code that let you read out the docstring in this gist:</p>
+
+<p><div><script src='https://gist.github.com/2146319.js'></script>
+<noscript><pre><code>class DocStrings
+  def docstrings!
+    &quot;&quot;&quot;
+      This is a docstring that&#39;s syntactically valid!
+      It&#39;ll do multiple lines!
+    &quot;&quot;&quot;
+  end
+
+  def single_line_docstring
+    &quot;&quot;&quot;Single line docstring!&quot;&quot;&quot;
+  end
+
+  def why?
+    &quot;&quot;&quot;
+      Cause I can? Duh.
+    &quot;&quot;&quot;
+  end
+
+  def how_does_it_work?
+    &quot;&quot;&quot;
+      I learnt that two strings side by side concats them together
+      and is valid Ruby from Peter Cooper (@peterc)&#39;s Ruby Trick Shots found
+      at http://rubyreloaded.com/trickshots/
+
+      Then the rest is just some good ol&#39; regex.
+    &quot;&quot;&quot;
+  end
+
+  def notes
+    &quot;&quot;&quot;
+      Double quotes not together like this: &quot;&quot;
+      breaks it.
+
+      Requires Method#source_location
+
+      Code below is unoptimised and needs further work
+    &quot;&quot;&quot;
+  end
+
+  def no_docstring
+
+  end
+end
+
+
+
+class Method
+  def doc
+    @doc ||= begin
+      path, line_number = source_location
+
+      return nil unless path &amp;&amp; File.exists?(path)
+
+      file = File.read(path)
+
+      if file =~ Regexp.new(%Q{\\A(?:.*?\n){#{line_number}}\s*?&quot;&quot;&quot;([\\s\\S]+?)&quot;&quot;&quot;})
+        $1.gsub(/\n\s+/, &quot;\n&quot;).strip
+      else
+        nil
+      end
+
+    end
+  end
+end
+
+
+doc = DocStrings.new
+(doc.methods - methods).each do |method_name|
+  puts &quot;method name #{method_name.to_s}:&quot;
+  puts doc.method(method_name).doc
+  puts &quot;----&quot;
+end
+</code></pre></noscript></div>
+</p>
+
+<p>It was an interesting hack, but I thought that Ruby would have to evaluate the concatenation on every method invocation, hence adding a performance hit purely to add a docstring, and hence ditched the idea of taking it further, and then promptly forgot about it.</p>
+
+<p>Six months later, I found it when I was going through my old gists. I brought it up with CRuby Master <a href="http://twitter.com/charliesome">@charliesome</a>, and he informed me that CRuby is pretty smart and actually won&rsquo;t emit bytecode if it detects that the literals aren&rsquo;t actually used, so there is actually no performance hit (apart from when it&rsquo;s parsing).</p>
+
+<p>Proof:</p>
+
+<p>```ruby <a href="https://eval.in/36676">https://eval.in/36676</a> <a href="https://eval.in/36676">https://eval.in/36676</a>
+def no_docstring
+  nil
+end</p>
+
+<p>def with_docstring
+  &ldquo;&rdquo;&ldquo;Foo&rdquo;&ldquo;&rdquo;
+  nil
+end</p>
+
+<p>puts RubyVM::InstructionSequence.of(method(:no_docstring)).disasm
+puts &ldquo;&mdash;&ndash;&rdquo;
+puts RubyVM::InstructionSequence.of(method(:with_docstring)).disasm</p>
+
+<h1>Output:</h1>
+
+<h1>== disasm: &lt;RubyVM::InstructionSequence:no_docstring@/tmp/execpad-ecb5745fbd46/source-ecb5745fbd46></h1>
+
+<h1>0000 trace            8                                               (   1)</h1>
+
+<h1>0002 putnil</h1>
+
+<h1>0003 trace            16                                              (   3)</h1>
+
+<h1>0005 leave</h1>
+
+<h1>&mdash;&ndash;</h1>
+
+<h1>== disasm: &lt;RubyVM::InstructionSequence:with_docstring@/tmp/execpad-ecb5745fbd46/source-ecb5745fbd46></h1>
+
+<h1>0000 trace            8                                               (   5)</h1>
+
+<h1>0002 putnil</h1>
+
+<h1>0003 trace            16                                              (   8)</h1>
+
+<h1>0005 leave</h1>
+
+<p>```</p>
+
+<p>I made a gem called <a href="https://github.com/chendo/docstrings">docstrings</a> that allows accessing docstrings via <code>Method#docstring</code>. I&rsquo;m not entirely sure how useful this actually is, so let me know if you end up using it.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Running individual specs with RubyMotion]]></title>
+    <link href="http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/"/>
+    <updated>2013-06-03T20:59:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m testing parts of <a href="http://shortcatapp.com/">Shortcat</a> (which as of v0.4.0 is in Objective-C) with <a href="http://www.rubymotion.com/">RubyMotion</a>, which is pretty nifty since I&rsquo;m much more comfortable in Ruby than Objective-C and writing tests is way easier in Ruby. However, it&rsquo;s far from the fully-featured <a href="http://rspec.info/">RSpec</a> like I&rsquo;m used to.</p>
+
+<p>When working on a class, I like to only run specs for that particular file to keep the runtimes down, then run all the specs later. In RubyMotion, you can achieve this with:</p>
+
+<p><code>bash
+$ rake spec files=foo_spec,spec/bar_spec.rb
+</code></p>
+
+<p>(via <a href="http://www.rubymotion.com/developer-center/articles/testing/#_run_selected_spec_files">http://www.rubymotion.com/developer-center/articles/testing/#_run_selected_spec_files</a></p>
+
+<p>However, I couldn&rsquo;t see any obvious way to run individual specs, which is useful when trying to focus on a particular spec. So I dug into the <code>spec.rb</code> in <code>/Library/RubyMotion/lib/motion/</code>, which seems to be just a copy of <a href="https://github.com/alloy/MacBacon">MacBacon</a>, and found this:</p>
+
+<p>```ruby /Library/RubyMotion/lib/motion/bacon.rb
+module Bacon
+  &hellip;</p>
+
+<p>  RestrictName    = //  unless defined? RestrictName
+  RestrictContext = //  unless defined? RestrictContext</p>
+
+<p>  Backtraces = true  unless defined? Backtraces</p>
+
+<p>  &hellip;
+```</p>
+
+<!--more-->
+
+
+<p>After checking the <code>it</code> function around line 503 (it may be different on yours), the name of the spec is regex matched against <code>RestrictName</code> and if it matches, it runs the spec. Unfortunately, <code>RestrictContext</code> isn&rsquo;t used yet but there&rsquo;s a <code>TODO</code> for it there. I tried uncommenting the line, but it seems to just hang for me and given I don&rsquo;t really care for it, I haven&rsquo;t looked into it further.</p>
+
+<p>I came up with a bit of code that lets you filter by spec name when running <code>rake spec</code>. I also added support for <code>RestrictContext</code> for when that gets implemented, as well as the ability to hide the backtrace. Place this in <code>spec/helpers/spec_options.rb</code>:</p>
+
+<p><div><script src='https://gist.github.com/5697551.js'></script>
+<noscript><pre><code>def silence_warnings(&amp;block)
+  warn_level = $VERBOSE
+  $VERBOSE = nil
+  begin
+    result = block.call
+  ensure
+    $VERBOSE = warn_level
+  end
+  result
+end
+ 
+silence_warnings do
+  module Bacon
+    if ENV[&#39;filter&#39;]
+      $stderr.puts &quot;Filtering specs that match: #{ENV[&#39;filter&#39;]}&quot;
+      RestrictName = Regexp.new(ENV[&#39;filter&#39;])
+    end
+ 
+    if ENV[&#39;filter_context&#39;]
+      $stderr.puts &quot;Filtering contexts that match: #{ENV[&#39;filter_context&#39;]}&quot;
+      RestrictContext = Regexp.new(ENV[&#39;filter_context&#39;])
+    end
+ 
+    Backtraces = false if ENV[&#39;hide_backtraces&#39;]
+  end
+end</code></pre></noscript></div>
+</p>
+
+<p>Usage:</p>
+
+<p><code>bash
+$ rake spec filter="name of spec"                   # To filter by spec name
+$ rake spec files=foo_spec filter="name of spec"
+$ rake spec filter_context="this doesn't work yet"  # To filter by context name (doesn't work until MacBacon implements it)
+$ rake spec hide_backtraces=yes                     # Hide backtraces
+</code></p>
+
+<p>Hope this helps!</p>
+]]></content>
+  </entry>
+  
+</feed>

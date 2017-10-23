@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: debugging | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/debugging/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Live Wireshark session from remote machine]]></title>
+    <link href="http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine/"/>
+    <updated>2015-07-12T14:16:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine</id>
+    <content type="html"><![CDATA[<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
+
+<p>However, this is usually a pain because the internet sharing feature tends to break for me which ends up in a reboot to resolve the issue, as well as having to mess with cables. We switched out the wireless router with one that was running OpenWRT with <code>tcpdump</code> installed, and other engineers used to ssh in, run <code>tcpdump</code> on the router, then copy the file down locally and then opening it up Wireshark.</p>
+
+<p>I prefer to be able to see the packets live, so I hunted around and came across a fairly simple solution. You&rsquo;ll need:</p>
+
+<ul>
+<li>OS X or Linux. Cygwin might work but who knows? (or cares)</li>
+<li>ssh access to remote machine</li>
+<li><code>tcpdump</code> and ability to access the appropriate interface on the remote machine</li>
+<li>Wireshark installed locally</li>
+</ul>
+
+
+<p>Run: <code>wireshark -k -i &lt;(ssh [remote machine] sudo tcpdump -i [interface name] -S -l -w - “[dump filter]”)</code></p>
+
+<p>The dump filter is optional. If it worked correctly, you should see Wireshark pop up and packets start to come in. You may need to scroll to the bottom of the list before it starts to auto-scroll.</p>
+
+<p>Enjoy!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Simulating out of order packets on OS X]]></title>
+    <link href="http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/"/>
+    <updated>2014-10-11T17:51:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x</id>
+    <content type="html"><![CDATA[<p>I needed a way to simulate out of order packets in order to try to reproduce an issue I&rsquo;ve been seeing at work, and I figured out a fairly simple way that only involves <code>ipfw</code> which is built-in on 10.9 but unfortunately has been removed in 10.10. The same technique should be adaptable to <code>pfctl</code> though.</p>
+
+<h2>Step 1 &ndash; Creating a pipe</h2>
+
+<p>To be able to simulate out of order packets, you must create a pipe in <code>ipfw</code> with a rule that matches the traffic you&rsquo;re trying to affect.</p>
+
+<p><code>sudo ipfw add 1 pipe 1 ip from &lt;host&gt; to me</code></p>
+
+<p>You must create another pipe if you want to affect traffic in the opposite direction.</p>
+
+<p><code>sudo ipfw add 2 pipe 1 ip from me to &lt;host&gt;</code></p>
+
+<h2>Step 2 &ndash; Simulate out of order packets</h2>
+
+<p><code>ipfw</code> lets you set a bunch of config options on traffic flowing through a pipe. You can limit the amount of bandwidth with <code>bw &lt;speed&gt;</code>, packet loss with <code>plr &lt;rate&gt;</code>, and latency with <code>delay &lt;time&gt;</code>.</p>
+
+<p>So to simulate 1 second latency, we would run:</p>
+
+<p><code>sudo ipfw pipe 1 config delay 1s</code></p>
+
+<p>However, this doesn&rsquo;t simulate out of order packets by itself. You can simulate packet loss which can induce out of order packets with:</p>
+
+<p><code>sudo ipfw pipe 1 config plr 0.05 # 5% packet loss</code></p>
+
+<p>But I believe I found a better solution (IMO) by constantly setting the delay to random values every couple of milliseconds.</p>
+
+<p><code>
+sudo ruby -e "loop { \\`ipfw pipe 1 config delay #{rand(500) + 100}ms\\`; sleep 0.01 }"
+</code></p>
+
+<p>where the delay is randomly set to (0-500) + 100ms every 10ms.</p>
+
+<h2>Step 3 &ndash; Clean up</h2>
+
+<p>Once you&rsquo;re done with your testing, be sure to remove the rules.</p>
+
+<p><code>sudo ipfw del 1</code></p>
+
+<h2>Conclusion</h2>
+
+<p>This worked well enough for me, and I hope it helps you too. If someone figures out how to do this with <code>pfctl</code> on 10.10, please let me know!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
+    <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
+    <updated>2013-09-30T14:01:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
+    <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
+
+<p>Xcode has the ability to break on all Objective-C exceptions (<code>Debug &gt; Breakpoints &gt; Create Exception Breakpoint...</code>), which is extremely useful as you can see the exception before the stack unwinds.</p>
+
+<p>However, enabling this option will cause Xcode to break whenever an exception occurs (even when inside a <code>@try/@catch</code> block), making it hard to track down the exception you&rsquo;re actually after when you&rsquo;re working with exception-heavy frameworks like CoreData or Accessibility. Also, Cocoa frameworks sometimes throws exceptions internally, which can be confusing as you wouldn&rsquo;t see an exception at your code otherwise.</p>
+
+<p>This was annoying me today while I was working on <a href="http://shortcatapp.com/">Shortcat</a> as Accessibility really likes throwing exceptions, so I wrote a <a href="https://gist.github.com/chendo/6759305">lldb script</a> that lets you easily specify what exceptions to ignore based on any selector on <code>NSException</code>. I based it off <a href="http://qwan.org/2013/06/18/how-to-snatch-the-error-code-from-the-trap-frame-in-xcode/">Rob Mayoff&rsquo;s <code>sniff_objc_exception_throw</code> script</a> as there wasn&rsquo;t really much in way of <code>lldb</code> documentation.</p>
+
+<h2>Setup</h2>
+
+<ul>
+<li>Grab the script from <a href="https://gist.github.com/chendo/6759305/raw/ignore_specified_objc_exceptions.py">here</a></li>
+<li>Put this script somewhere (eg. <code>~/Library/lldb/ignore_specified_objc_exceptions.py</code>)</li>
+<li>Add this to your <code>~/.lldbinit</code>:
+<code>command script import &lt;path to ignore_specified_objc_exceptions.py&gt;</code></li>
+</ul>
+
+
+<h4>But I&rsquo;m lazy!</h4>
+
+<p><code>bash for-the-lazy.sh
+mkdir -p ~/Library/lldb
+curl -L https://gist.github.com/chendo/6759305/raw/ignore_specified_objc_exceptions.py &gt; ~/Library/lldb/ignore_specified_objc_exceptions.py
+echo "command script import ~/Library/lldb/ignore_specified_objc_exceptions.py" &gt;&gt; ~/.lldbinit
+</code></p>
+
+<h2>Usage</h2>
+
+<ul>
+<li>In Xcode, add a breakpoint to catch all Objective-C exceptions</li>
+<li>Edit the breakpoint and add a Debugger Command with the following command:
+<code>ignore_specified_objc_exceptions name:NSAccessibilityException className:NSSomeException</code></li>
+<li>This will ignore exceptions where <code>NSException</code> <code>-name</code> matches <code>NSAccessibilityException</code> OR <code>-className</code> matches <code>NSSomeException</code></li>
+</ul>
+
+
+<p>It should look something like this:</p>
+
+<p><img src="http://f.cl.ly/items/3f3S3q3D2L0o1y2t0F2i/Screen%20Shot%202013-09-30%20at%202.52.39%20PM.png" alt="Screenshot" /></p>
+
+<p>Let me know if you have any issues!</p>
+]]></content>
+  </entry>
+  
+</feed>

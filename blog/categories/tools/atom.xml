@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: tools | chendo]]></title>
+  <link href="http://chendo.github.io/blog/categories/tools/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Live Wireshark session from remote machine]]></title>
+    <link href="http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine/"/>
+    <updated>2015-07-12T14:16:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine</id>
+    <content type="html"><![CDATA[<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
+
+<p>However, this is usually a pain because the internet sharing feature tends to break for me which ends up in a reboot to resolve the issue, as well as having to mess with cables. We switched out the wireless router with one that was running OpenWRT with <code>tcpdump</code> installed, and other engineers used to ssh in, run <code>tcpdump</code> on the router, then copy the file down locally and then opening it up Wireshark.</p>
+
+<p>I prefer to be able to see the packets live, so I hunted around and came across a fairly simple solution. You&rsquo;ll need:</p>
+
+<ul>
+<li>OS X or Linux. Cygwin might work but who knows? (or cares)</li>
+<li>ssh access to remote machine</li>
+<li><code>tcpdump</code> and ability to access the appropriate interface on the remote machine</li>
+<li>Wireshark installed locally</li>
+</ul>
+
+
+<p>Run: <code>wireshark -k -i &lt;(ssh [remote machine] sudo tcpdump -i [interface name] -S -l -w - “[dump filter]”)</code></p>
+
+<p>The dump filter is optional. If it worked correctly, you should see Wireshark pop up and packets start to come in. You may need to scroll to the bottom of the list before it starts to auto-scroll.</p>
+
+<p>Enjoy!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Visualising CGRects and NSRects from lldb with drawrect]]></title>
+    <link href="http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/"/>
+    <updated>2013-10-04T16:38:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb</id>
+    <content type="html"><![CDATA[<p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
+
+<p>I decided to write a tool to solve this problem. I also took the chance to actually develop an app with <a href="http://rubymotion.com">RubyMotion</a>.</p>
+
+<h2>Introducing <code>drawrect</code></h2>
+
+<p><a href="https://github.com/chendo/drawrect"><code>drawrect</code></a> is a command line tool for OS X that simply draws translucent rectangles on the screen.</p>
+
+<p><img src="https://github.com/chendo/drawrect/raw/master/screenshot.png" alt="Screenshot" /></p>
+
+<p>You can use it from within <code>lldb</code> (provided you installed the scripts) or from the command line.</p>
+
+<h2>Usage</h2>
+
+<h4>Within <code>lldb</code></h4>
+
+<p>```
+dr <rect expression>     # This will get the string representation of</p>
+
+<pre><code>                     # the rect returned by the expression and draw it
+</code></pre>
+
+<p>dr window.frame          # This will draw a rect of the window&rsquo;s frame</p>
+
+<p>drf <rect expression>    # This is the same as above, but where the origin</p>
+
+<pre><code>                     # of the rect is from the top left
+</code></pre>
+
+<p>dc                       # Removes all the rects
+```</p>
+
+<h4>Command line</h4>
+
+<p>```bash
+drawrect rect <rect> [label] [colour] [opacity]           # Draws a rect at <rect> coordinates with [label], background colour in hex [colour] with opacity [opacity]
+drawrect flipped_rect <rect> [label] [colour] [opacity]   # Same as above, but from top-left origin</p>
+
+<p>drawrect rect 100,100,100,100 Hello 00ff00 0.3            # Draws a rect at origin 100,100 with size 100,100, text &ldquo;Hello&rdquo;, translucent green background
+drawrect clear     # Clears rect
+drawrect quit      # Quits the drawrect process
+drawrect help      # Shows help
+drawrect version   # Shows version
+```</p>
+
+<h2>Future improvements</h2>
+
+<p>I couldn&rsquo;t find a way to hook into process termination or resuming in <code>lldb</code>, so you would have to clear the rects manually with <code>drc</code> in <code>lldb</code>. If someone knows how to do this, please let me know in the comments!</p>
+
+<p>I&rsquo;d like to add a feature where you could hover over a <code>CGRect</code> or <code>NSRect</code> in the Variable view and it would highlight, but I&rsquo;m not sure how to do this without resorting to Accessibility.</p>
+
+<p>I hope <code>drawrect</code> is useful to others! Let me know if this has been useful to you.</p>
+]]></content>
+  </entry>
+  
+</feed>

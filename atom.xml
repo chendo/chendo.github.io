@@ -1,111 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
 
-<!DOCTYPE HTML>
-<html>
-<head>
-	<meta charset="utf-8">
-	<title>chendo</title>
-	<meta name="author" content="Jack 'chendo' Chen">
-
-	
-	<meta name="description" content="Jul 12th, 2015 debugging, tools Live Wireshark session from remote machine I was tasked to debug some network stack issues last week at work which &hellip;">
-	
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-	<link href="/atom.xml" rel="alternate" title="chendo" type="application/atom+xml">
-	
-	<link rel="canonical" href="http://chendo.github.io/">
-	<link href="/favicon.png" rel="shortcut icon">
-	<link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700' rel='stylesheet' type='text/css'>
-	<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-</head>
-
-
-<body>
-	<div class="container">
-		<div class="left-col">
-			<div class="intrude-less">
-			<header id="header" class="inner"><div class="profilepic">
-	<img src="http://www.gravatar.com/avatar/e2dc9b044425e2df0a07873b0b65693e?s=160" alt="Profile Picture" style="width: 160px" />
-</div>
-<hgroup>
-  <h1><a href="/">chendo</a></h1>
-</hgroup>
-
-<p class="subtitle">Jack Chen is a software engineer, gadget enthusiast and video gamer. Lives in Melbourne, Australia. Works on <a href="https://alt.com.au/">Alt</a> and creator of <a href="http://shortcatapp.com">Shortcat</a>.</p>
-<nav id="main-nav"><ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-</nav>
-<nav id="sub-nav">
-	<div class="social">
-		
-		
-		
-		<a class="twitter" href="http://twitter.com/chendo" title="Twitter">Twitter</a>
-		
-		
-		<a class="github" href="https://github.com/chendo" title="GitHub">GitHub</a>
-		
-		
-		
-		
-		
-		
-		
-		<a class="rss" href="/atom.xml" title="RSS">RSS</a>
-		
-	</div>
-</nav>
-</header>				
-			</div>
-		</div>	
-		<div class="mid-col">
-			
-				
-			
-			<div class="mid-col-container">
-				<div id="content" class="inner">
-<div itemscope itemtype="http://schema.org/Blog">
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
+  <title><![CDATA[chendo]]></title>
+  <link href="http://chendo.github.io/atom.xml" rel="self"/>
+  <link href="http://chendo.github.io/"/>
+  <updated>2017-10-23T08:57:00+02:00</updated>
+  <id>http://chendo.github.io/</id>
+  <author>
+    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <email><![CDATA[blog@chen.do]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
 
   
-
-
-<time datetime="2015-07-12T14:16:00+02:00" data-updated="true" itemprop="datePublished">Jul 12<span>th</span>, 2015</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/debugging/'>debugging</a>, <a class='category' href='/blog/categories/tools/'>tools</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2015/07/12/live-wireshark-session-from-remote-machine/" itemprop="url">Live Wireshark session from remote machine</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
+  <entry>
+    <title type="html"><![CDATA[Live Wireshark session from remote machine]]></title>
+    <link href="http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine/"/>
+    <updated>2015-07-12T14:16:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine</id>
+    <content type="html"><![CDATA[<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
 
 <p>However, this is usually a pain because the internet sharing feature tends to break for me which ends up in a reboot to resolve the issue, as well as having to mess with cables. We switched out the wireless router with one that was running OpenWRT with <code>tcpdump</code> installed, and other engineers used to ssh in, run <code>tcpdump</code> on the router, then copy the file down locally and then opening it up Wireshark.</p>
 
@@ -124,41 +37,15 @@
 <p>The dump filter is optional. If it worked correctly, you should see Wireshark pop up and packets start to come in. You may need to scroll to the bottom of the list before it starts to auto-scroll.</p>
 
 <p>Enjoy!</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2014-10-11T17:51:00+02:00" data-updated="true" itemprop="datePublished">Oct 11<span>th</span>, 2014</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/debugging/'>debugging</a>, <a class='category' href='/blog/categories/osx/'>osx</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/" itemprop="url">Simulating out of order packets on OS X</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I needed a way to simulate out of order packets in order to try to reproduce an issue I&rsquo;ve been seeing at work, and I figured out a fairly simple way that only involves <code>ipfw</code> which is built-in on 10.9 but unfortunately has been removed in 10.10. The same technique should be adaptable to <code>pfctl</code> though.</p>
+  <entry>
+    <title type="html"><![CDATA[Simulating out of order packets on OS X]]></title>
+    <link href="http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/"/>
+    <updated>2014-10-11T17:51:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x</id>
+    <content type="html"><![CDATA[<p>I needed a way to simulate out of order packets in order to try to reproduce an issue I&rsquo;ve been seeing at work, and I figured out a fairly simple way that only involves <code>ipfw</code> which is built-in on 10.9 but unfortunately has been removed in 10.10. The same technique should be adaptable to <code>pfctl</code> though.</p>
 
 <h2>Step 1 &ndash; Creating a pipe</h2>
 
@@ -199,41 +86,15 @@
 <h2>Conclusion</h2>
 
 <p>This worked well enough for me, and I hope it helps you too. If someone figures out how to do this with <code>pfctl</code> on 10.10, please let me know!</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-10-22T16:52:00+02:00" data-updated="true" itemprop="datePublished">Oct 22<span>nd</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/dtrace/'>dtrace</a>, <a class='category' href='/blog/categories/process/'>process</a>, <a class='category' href='/blog/categories/xcode/'>xcode</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/" itemprop="url">Reverse engineering Xcode with dtrace</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
+  <entry>
+    <title type="html"><![CDATA[Reverse engineering Xcode with dtrace]]></title>
+    <link href="http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/"/>
+    <updated>2013-10-22T16:52:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace</id>
+    <content type="html"><![CDATA[<p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
 
 <p>For me, it is/<a href="https://github.com/chendo/FuzzyAutocompletePlugin">was</a> the lack of a good autocomplete that really ticks me off. Xcode&rsquo;s autocomplete is prefix-based, so Xcode will only show completions where the start of the completion matches your incomplete word. This is rather frustrating, as the prefix for completion items tends to be the same.</p>
 
@@ -636,41 +497,15 @@
 <p>The end product is <a href="https://github.com/chendo/FuzzyAutocompletePlugin">FuzzyAutocomplete</a> (<a href="https://github.com/chendo/FuzzyAutocompletePlugin">github.com/chendo/FuzzyAutocompletePlugin</a>), which works in Xcode 5. It shouldn&rsquo;t conflict with any existing plugins like <a href="https://github.com/ksuther/KSImageNamed-Xcode">KSImageNamed</a> as most plugins expose additional completion items rather than change the filtering.</p>
 
 <p>You can install it with <a href="http://mneorr.github.io/Alcatraz/">Alcatraz</a> or by cloning it and building it yourself. See the <a href="https://github.com/chendo/FuzzyAutocompletePlugin">project on Github</a> for more info.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-10-04T18:38:00+02:00" data-updated="true" itemprop="datePublished">Oct 4<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/rubymotion/'>rubymotion</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion/" itemprop="url">Building a Command Line OS X app with RubyMotion</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I decided to write a command line tool with <a href="http://rubymotion.com/">RubyMotion</a> to <a href="http://chen.do/blog/2013/10/04/visualising-rects-from-lldb/">visualise CGRects and NSRects from lldb</a>, but I quickly discovered that RubyMotion does not support this out of the box.</p>
+  <entry>
+    <title type="html"><![CDATA[Building a Command Line OS X app with RubyMotion]]></title>
+    <link href="http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion/"/>
+    <updated>2013-10-04T18:38:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion</id>
+    <content type="html"><![CDATA[<p>I decided to write a command line tool with <a href="http://rubymotion.com/">RubyMotion</a> to <a href="http://chen.do/blog/2013/10/04/visualising-rects-from-lldb/">visualise CGRects and NSRects from lldb</a>, but I quickly discovered that RubyMotion does not support this out of the box.</p>
 
 <p>You can build an OS X app that doesn&rsquo;t present a UI by by setting <code>LSUIElement</code> to <code>true</code> and not creating any UI, but when you copy the binary out of the bundle and try to run it, you get an error that looks something like this:</p>
 
@@ -905,41 +740,15 @@
 <p>Check out the <code>drawrect</code> project at <a href="https://github.com/chendo/drawrect">https://github.com/chendo/drawrect</a> for a fully functioning example.</p>
 
 <p>Let me know if this has been useful to you!</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-10-04T16:38:00+02:00" data-updated="true" itemprop="datePublished">Oct 4<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/lldb/'>lldb</a>, <a class='category' href='/blog/categories/tools/'>tools</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/10/04/visualising-rects-from-lldb/" itemprop="url">Visualising CGRects and NSRects from lldb with drawrect</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
+  <entry>
+    <title type="html"><![CDATA[Visualising CGRects and NSRects from lldb with drawrect]]></title>
+    <link href="http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/"/>
+    <updated>2013-10-04T16:38:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb</id>
+    <content type="html"><![CDATA[<p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
 
 <p>I decided to write a tool to solve this problem. I also took the chance to actually develop an app with <a href="http://rubymotion.com">RubyMotion</a>.</p>
 
@@ -1003,41 +812,15 @@
 <p>I&rsquo;d like to add a feature where you could hover over a <code>CGRect</code> or <code>NSRect</code> in the Variable view and it would highlight, but I&rsquo;m not sure how to do this without resorting to Accessibility.</p>
 
 <p>I hope <code>drawrect</code> is useful to others! Let me know if this has been useful to you.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-09-30T14:01:00+02:00" data-updated="true" itemprop="datePublished">Sep 30<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/debugging/'>debugging</a>, <a class='category' href='/blog/categories/objective-c/'>objective-c</a>, <a class='category' href='/blog/categories/xcode/'>xcode</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/" itemprop="url">Selectively ignoring Objective-C exceptions in Xcode</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
+  <entry>
+    <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
+    <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
+    <updated>2013-09-30T14:01:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
+    <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
 
 <p>Xcode has the ability to break on all Objective-C exceptions (<code>Debug &gt; Breakpoints &gt; Create Exception Breakpoint...</code>), which is extremely useful as you can see the exception before the stack unwinds.</p>
 
@@ -1081,41 +864,15 @@
 <p><img src="http://f.cl.ly/items/3f3S3q3D2L0o1y2t0F2i/Screen%20Shot%202013-09-30%20at%202.52.39%20PM.png" alt="Screenshot" /></p>
 
 <p>Let me know if you have any issues!</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-09-16T12:57:00+02:00" data-updated="true" itemprop="datePublished">Sep 16<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/sublime-text/'>sublime text</a>, <a class='category' href='/blog/categories/workflow/'>workflow</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2/" itemprop="url">Editing files on a remote server with Sublime Text 2</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I&rsquo;ve always hated editing files on a remote machine over SSH. I&rsquo;m not a huge fan of vim, and nano is terrible for anything remotely (hah, get it?) complex.</p>
+  <entry>
+    <title type="html"><![CDATA[Editing files on a remote server with Sublime Text 2]]></title>
+    <link href="http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2/"/>
+    <updated>2013-09-16T12:57:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2</id>
+    <content type="html"><![CDATA[<p>I&rsquo;ve always hated editing files on a remote machine over SSH. I&rsquo;m not a huge fan of vim, and nano is terrible for anything remotely (hah, get it?) complex.</p>
 
 <p>Being able to use your local editor with all your plugins and everything all set up would be ideal. However, each solution tends to have its caveats.</p>
 
@@ -1244,41 +1001,15 @@
 
 
 
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-07-07T14:46:00+02:00" data-updated="true" itemprop="datePublished">Jul 7<span>th</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/ruby/'>ruby</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/07/07/python-like-docstrings-in-ruby/" itemprop="url">Python-like docstrings in Ruby!</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>About six months ago, I watched Peter Cooper&rsquo;s <a href="http://rubyreloaded.com/trickshots">Ruby Trickshots</a> and learnt that Ruby has an interesting syntax that allows you to concatenate strings by simply placing them after each other.</p>
+  <entry>
+    <title type="html"><![CDATA[Python-like docstrings in Ruby!]]></title>
+    <link href="http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/"/>
+    <updated>2013-07-07T14:46:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby</id>
+    <content type="html"><![CDATA[<p>About six months ago, I watched Peter Cooper&rsquo;s <a href="http://rubyreloaded.com/trickshots">Ruby Trickshots</a> and learnt that Ruby has an interesting syntax that allows you to concatenate strings by simply placing them after each other.</p>
 
 <p>For example:</p>
 
@@ -1434,41 +1165,15 @@ end
 
 
 <p>I made a gem called <a href="https://github.com/chendo/docstrings">docstrings</a> that allows accessing docstrings via <code>Method#docstring</code>. I&rsquo;m not entirely sure how useful this actually is, so let me know if you end up using it.</p>
-
-		
-		
-	</div>
-
-</article>
-
-
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
-
-
-
-
-
-
-
-
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-06-03T20:59:00+02:00" data-updated="true" itemprop="datePublished">Jun 3<span>rd</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/ruby/'>ruby</a>, <a class='category' href='/blog/categories/rubymotion/'>rubymotion,</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/06/03/running-individual-specs-with-rubymotion/" itemprop="url">Running individual specs with RubyMotion</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>I&rsquo;m testing parts of <a href="http://shortcatapp.com/">Shortcat</a> (which as of v0.4.0 is in Objective-C) with <a href="http://www.rubymotion.com/">RubyMotion</a>, which is pretty nifty since I&rsquo;m much more comfortable in Ruby than Objective-C and writing tests is way easier in Ruby. However, it&rsquo;s far from the fully-featured <a href="http://rspec.info/">RSpec</a> like I&rsquo;m used to.</p>
+  <entry>
+    <title type="html"><![CDATA[Running individual specs with RubyMotion]]></title>
+    <link href="http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/"/>
+    <updated>2013-06-03T20:59:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m testing parts of <a href="http://shortcatapp.com/">Shortcat</a> (which as of v0.4.0 is in Objective-C) with <a href="http://www.rubymotion.com/">RubyMotion</a>, which is pretty nifty since I&rsquo;m much more comfortable in Ruby than Objective-C and writing tests is way easier in Ruby. However, it&rsquo;s far from the fully-featured <a href="http://rspec.info/">RSpec</a> like I&rsquo;m used to.</p>
 
 <p>When working on a class, I like to only run specs for that particular file to keep the runtimes down, then run all the specs later. In RubyMotion, you can achieve this with:</p>
 
@@ -1504,41 +1209,65 @@ end
 
 
 
-
-		
-		<a href="/blog/2013/06/03/running-individual-specs-with-rubymotion/" class="more-link">Read on &rarr;</a>
-	</div>
-
-</article>
+<!--more-->
 
 
-    <article class="post" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
-	<div class="meta">
-		<div class="date">
+<p>After checking the <code>it</code> function around line 503 (it may be different on yours), the name of the spec is regex matched against <code>RestrictName</code> and if it matches, it runs the spec. Unfortunately, <code>RestrictContext</code> isn&rsquo;t used yet but there&rsquo;s a <code>TODO</code> for it there. I tried uncommenting the line, but it seems to just hang for me and given I don&rsquo;t really care for it, I haven&rsquo;t looked into it further.</p>
+
+<p>I came up with a bit of code that lets you filter by spec name when running <code>rake spec</code>. I also added support for <code>RestrictContext</code> for when that gets implemented, as well as the ability to hide the backtrace. Place this in <code>spec/helpers/spec_options.rb</code>:</p>
+
+<div><script src='https://gist.github.com/5697551.js'></script>
+<noscript><pre><code>def silence_warnings(&amp;block)
+  warn_level = $VERBOSE
+  $VERBOSE = nil
+  begin
+    result = block.call
+  ensure
+    $VERBOSE = warn_level
+  end
+  result
+end
+ 
+silence_warnings do
+  module Bacon
+    if ENV[&#39;filter&#39;]
+      $stderr.puts &quot;Filtering specs that match: #{ENV[&#39;filter&#39;]}&quot;
+      RestrictName = Regexp.new(ENV[&#39;filter&#39;])
+    end
+ 
+    if ENV[&#39;filter_context&#39;]
+      $stderr.puts &quot;Filtering contexts that match: #{ENV[&#39;filter_context&#39;]}&quot;
+      RestrictContext = Regexp.new(ENV[&#39;filter_context&#39;])
+    end
+ 
+    Backtraces = false if ENV[&#39;hide_backtraces&#39;]
+  end
+end</code></pre></noscript></div>
 
 
+<p>Usage:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class='highlight'><table><td class='gutter'><pre class='line-numbers'><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>rake spec <span class="nv">filter</span><span class="o">=</span><span class="s2">&quot;name of spec&quot;</span>                   <span class="c"># To filter by spec name</span>
+</span><span class='line'><span class="nv">$ </span>rake spec <span class="nv">files</span><span class="o">=</span>foo_spec <span class="nv">filter</span><span class="o">=</span><span class="s2">&quot;name of spec&quot;</span>
+</span><span class='line'><span class="nv">$ </span>rake spec <span class="nv">filter_context</span><span class="o">=</span><span class="s2">&quot;this doesn&#39;t work yet&quot;</span>  <span class="c"># To filter by context name (doesn&#39;t work until MacBacon implements it)</span>
+</span><span class='line'><span class="nv">$ </span>rake spec <span class="nv">hide_backtraces</span><span class="o">=</span>yes                     <span class="c"># Hide backtraces</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
-
-
-
-
+<p>Hope this helps!</p>
+]]></content>
+  </entry>
   
-
-
-<time datetime="2013-06-02T15:17:00+02:00" data-updated="true" itemprop="datePublished">Jun 2<span>nd</span>, 2013</time></div>
-		<div class="tags">
-
-
-	<a class='category' href='/blog/categories/cocoa/'>cocoa</a>, <a class='category' href='/blog/categories/objective-c/'>objective-c</a>
-
-
-</div>
-		
-	</div>
-	<h1 class="title" itemprop="name"><a href="/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps/" itemprop="url">Showing the Crash Dialog for Backgrounded Cocoa Apps</a></h1>
-	<div class="entry-content" itemprop="articleBody">
-		<p>While developing <a href="http://shortcatapp.com">Shortcat</a>, I ran into an extremely annoying problem with <code>LSUIElement</code> apps: They crash silently, giving the user no indication that it has crashed. This is especially bad when you don&rsquo;t have any visual indicator that it&rsquo;s running.</p>
+  <entry>
+    <title type="html"><![CDATA[Showing the Crash Dialog for Backgrounded Cocoa Apps]]></title>
+    <link href="http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps/"/>
+    <updated>2013-06-02T15:17:00+02:00</updated>
+    <id>http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps</id>
+    <content type="html"><![CDATA[<p>While developing <a href="http://shortcatapp.com">Shortcat</a>, I ran into an extremely annoying problem with <code>LSUIElement</code> apps: They crash silently, giving the user no indication that it has crashed. This is especially bad when you don&rsquo;t have any visual indicator that it&rsquo;s running.</p>
 
 <p>This <a href="http://stackoverflow.com/questions/10359966/crashreporter-dialog-doesnt-show-when-mac-app-crashes">post on StackOverflow</a> says that you can use <code>CrashReporterPrefs.app</code> to enable developer mode so it would show the dialog when a backgrounded app crashes. However, this is still a bad experience for end users.</p>
 
@@ -1739,66 +1468,7 @@ end
 <p>Ideally, it would be better if PLCrashReporter supported some sort of callback so you can perform your own actions before it crashes, but I&rsquo;d say a lot of people would try to call Objective-C code within it, making the crash handling not as reliable.</p>
 
 <p>Please let me know if there&rsquo;s ways to improve on this!</p>
-
-		
-		
-	</div>
-
-</article>
-
-</div>
-<nav id="pagenavi">
-    
-    
-    <div class="center"><a href="/blog/archives">Blog Archives</a></div>
-</nav></div>
-			</div>
-			<footer id="footer" class="inner"><p>
-  Copyright &copy; 2017 - Jack 'chendo' Chen -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-Design credit: <a href="http://shashankmehta.in/archive/2012/greyshade.html">Shashank Mehta</a></footer>
-			<script src="/javascripts/slash.js"></script>
-<script src="/javascripts/jquery.fancybox.pack.js"></script>
-<script type="text/javascript">
-(function($){
-	$('.fancybox').fancybox();
-})(jQuery);
-</script> <!-- Delete or comment this line to disable Fancybox -->
-
-
-<script type="text/javascript">
-      var disqus_shortname = 'chendo';
-      
-        
-        var disqus_script = 'count.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-	<script type="text/javascript">
-		var _gaq = _gaq || [];
-		_gaq.push(['_setAccount', 'UA-110306-6']);
-		_gaq.push(['_trackPageview']);
-
-		(function() {
-			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-		})();
-	</script>
-
-
-
-
-		</div>
-	</div>
-</body>
-</html>
+]]></content>
+  </entry>
+  
+</feed>
