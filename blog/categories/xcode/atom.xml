@@ -4,10 +4,10 @@
   <title><![CDATA[Category: xcode | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/xcode/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Reverse engineering Xcode with dtrace]]></title>
     <link href="http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/"/>
-    <updated>2013-10-22T16:52:00+02:00</updated>
+    <updated>2013-10-22T16:52:00+11:00</updated>
     <id>http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace</id>
     <content type="html"><![CDATA[<p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
 
@@ -312,7 +312,7 @@ printf("%lu %*s%s %c[%s %s]\n", timestamp, indention * indentation_amount, "", "
   <entry>
     <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
     <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
-    <updated>2013-09-30T14:01:00+02:00</updated>
+    <updated>2013-09-30T14:01:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
     <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
 

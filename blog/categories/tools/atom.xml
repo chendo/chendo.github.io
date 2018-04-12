@@ -4,10 +4,10 @@
   <title><![CDATA[Category: tools | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/tools/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Live Wireshark session from remote machine]]></title>
     <link href="http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine/"/>
-    <updated>2015-07-12T14:16:00+02:00</updated>
+    <updated>2015-07-12T14:16:00+10:00</updated>
     <id>http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine</id>
     <content type="html"><![CDATA[<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
 
@@ -43,7 +43,7 @@
   <entry>
     <title type="html"><![CDATA[Visualising CGRects and NSRects from lldb with drawrect]]></title>
     <link href="http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/"/>
-    <updated>2013-10-04T16:38:00+02:00</updated>
+    <updated>2013-10-04T16:38:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb</id>
     <content type="html"><![CDATA[<p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
 

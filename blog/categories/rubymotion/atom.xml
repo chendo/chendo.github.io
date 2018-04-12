@@ -4,10 +4,10 @@
   <title><![CDATA[Category: rubymotion | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/rubymotion/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Building a Command Line OS X app with RubyMotion]]></title>
     <link href="http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion/"/>
-    <updated>2013-10-04T18:38:00+02:00</updated>
+    <updated>2013-10-04T18:38:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion</id>
     <content type="html"><![CDATA[<p>I decided to write a command line tool with <a href="http://rubymotion.com/">RubyMotion</a> to <a href="http://chen.do/blog/2013/10/04/visualising-rects-from-lldb/">visualise CGRects and NSRects from lldb</a>, but I quickly discovered that RubyMotion does not support this out of the box.</p>
 

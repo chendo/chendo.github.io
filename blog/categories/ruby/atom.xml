@@ -4,10 +4,10 @@
   <title><![CDATA[Category: ruby | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Python-like docstrings in Ruby!]]></title>
     <link href="http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/"/>
-    <updated>2013-07-07T14:46:00+02:00</updated>
+    <updated>2013-07-07T14:46:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby</id>
     <content type="html"><![CDATA[<p>About six months ago, I watched Peter Cooper&rsquo;s <a href="http://rubyreloaded.com/trickshots">Ruby Trickshots</a> and learnt that Ruby has an interesting syntax that allows you to concatenate strings by simply placing them after each other.</p>
 
@@ -165,7 +165,7 @@ puts RubyVM::InstructionSequence.of(method(:with_docstring)).disasm</p>
   <entry>
     <title type="html"><![CDATA[Running individual specs with RubyMotion]]></title>
     <link href="http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/"/>
-    <updated>2013-06-03T20:59:00+02:00</updated>
+    <updated>2013-06-03T20:59:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion</id>
     <content type="html"><![CDATA[<p>I&rsquo;m testing parts of <a href="http://shortcatapp.com/">Shortcat</a> (which as of v0.4.0 is in Objective-C) with <a href="http://www.rubymotion.com/">RubyMotion</a>, which is pretty nifty since I&rsquo;m much more comfortable in Ruby than Objective-C and writing tests is way easier in Ruby. However, it&rsquo;s far from the fully-featured <a href="http://rspec.info/">RSpec</a> like I&rsquo;m used to.</p>
 

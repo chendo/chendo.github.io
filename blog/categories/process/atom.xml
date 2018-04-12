@@ -4,10 +4,10 @@
   <title><![CDATA[Category: process | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/process/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Reverse engineering Xcode with dtrace]]></title>
     <link href="http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/"/>
-    <updated>2013-10-22T16:52:00+02:00</updated>
+    <updated>2013-10-22T16:52:00+11:00</updated>
     <id>http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace</id>
     <content type="html"><![CDATA[<p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
 

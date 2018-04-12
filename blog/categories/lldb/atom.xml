@@ -4,10 +4,10 @@
   <title><![CDATA[Category: lldb | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/lldb/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Visualising CGRects and NSRects from lldb with drawrect]]></title>
     <link href="http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/"/>
-    <updated>2013-10-04T16:38:00+02:00</updated>
+    <updated>2013-10-04T16:38:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb</id>
     <content type="html"><![CDATA[<p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
 

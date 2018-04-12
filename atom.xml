@@ -4,10 +4,10 @@
   <title><![CDATA[chendo]]></title>
   <link href="http://chendo.github.io/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Live Wireshark session from remote machine]]></title>
     <link href="http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine/"/>
-    <updated>2015-07-12T14:16:00+02:00</updated>
+    <updated>2015-07-12T14:16:00+10:00</updated>
     <id>http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine</id>
     <content type="html"><![CDATA[<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
 
@@ -43,7 +43,7 @@
   <entry>
     <title type="html"><![CDATA[Simulating out of order packets on OS X]]></title>
     <link href="http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/"/>
-    <updated>2014-10-11T17:51:00+02:00</updated>
+    <updated>2014-10-11T17:51:00+11:00</updated>
     <id>http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x</id>
     <content type="html"><![CDATA[<p>I needed a way to simulate out of order packets in order to try to reproduce an issue I&rsquo;ve been seeing at work, and I figured out a fairly simple way that only involves <code>ipfw</code> which is built-in on 10.9 but unfortunately has been removed in 10.10. The same technique should be adaptable to <code>pfctl</code> though.</p>
 
@@ -92,7 +92,7 @@
   <entry>
     <title type="html"><![CDATA[Reverse engineering Xcode with dtrace]]></title>
     <link href="http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace/"/>
-    <updated>2013-10-22T16:52:00+02:00</updated>
+    <updated>2013-10-22T16:52:00+11:00</updated>
     <id>http://chendo.github.io/blog/2013/10/22/reverse-engineering-xcode-with-dtrace</id>
     <content type="html"><![CDATA[<p>Both OS X and iOS tend to have a love-hate relationship with Xcode. Crashing, lacking solid refactoring tools, some UX failures, and so on.</p>
 
@@ -503,7 +503,7 @@
   <entry>
     <title type="html"><![CDATA[Building a Command Line OS X app with RubyMotion]]></title>
     <link href="http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion/"/>
-    <updated>2013-10-04T18:38:00+02:00</updated>
+    <updated>2013-10-04T18:38:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/10/04/building-a-command-line-os-x-app-with-rubymotion</id>
     <content type="html"><![CDATA[<p>I decided to write a command line tool with <a href="http://rubymotion.com/">RubyMotion</a> to <a href="http://chen.do/blog/2013/10/04/visualising-rects-from-lldb/">visualise CGRects and NSRects from lldb</a>, but I quickly discovered that RubyMotion does not support this out of the box.</p>
 
@@ -746,7 +746,7 @@
   <entry>
     <title type="html"><![CDATA[Visualising CGRects and NSRects from lldb with drawrect]]></title>
     <link href="http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb/"/>
-    <updated>2013-10-04T16:38:00+02:00</updated>
+    <updated>2013-10-04T16:38:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/10/04/visualising-rects-from-lldb</id>
     <content type="html"><![CDATA[<p>Halfway through debugging the new enumeration engine for <a href="https://shortcatapp.com/">Shortcat</a>, I realised I needed a way to visualise <code>CGRect</code>/<code>NSRect</code>s while debugging. Trying to figure out how one <code>CGRect</code> relates to another by looking at four numbers is a PITA.</p>
 
@@ -818,7 +818,7 @@
   <entry>
     <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
     <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
-    <updated>2013-09-30T14:01:00+02:00</updated>
+    <updated>2013-09-30T14:01:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
     <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
 
@@ -870,7 +870,7 @@
   <entry>
     <title type="html"><![CDATA[Editing files on a remote server with Sublime Text 2]]></title>
     <link href="http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2/"/>
-    <updated>2013-09-16T12:57:00+02:00</updated>
+    <updated>2013-09-16T12:57:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2</id>
     <content type="html"><![CDATA[<p>I&rsquo;ve always hated editing files on a remote machine over SSH. I&rsquo;m not a huge fan of vim, and nano is terrible for anything remotely (hah, get it?) complex.</p>
 
@@ -1007,7 +1007,7 @@
   <entry>
     <title type="html"><![CDATA[Python-like docstrings in Ruby!]]></title>
     <link href="http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby/"/>
-    <updated>2013-07-07T14:46:00+02:00</updated>
+    <updated>2013-07-07T14:46:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/07/07/python-like-docstrings-in-ruby</id>
     <content type="html"><![CDATA[<p>About six months ago, I watched Peter Cooper&rsquo;s <a href="http://rubyreloaded.com/trickshots">Ruby Trickshots</a> and learnt that Ruby has an interesting syntax that allows you to concatenate strings by simply placing them after each other.</p>
 
@@ -1171,7 +1171,7 @@ end
   <entry>
     <title type="html"><![CDATA[Running individual specs with RubyMotion]]></title>
     <link href="http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion/"/>
-    <updated>2013-06-03T20:59:00+02:00</updated>
+    <updated>2013-06-03T20:59:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/06/03/running-individual-specs-with-rubymotion</id>
     <content type="html"><![CDATA[<p>I&rsquo;m testing parts of <a href="http://shortcatapp.com/">Shortcat</a> (which as of v0.4.0 is in Objective-C) with <a href="http://www.rubymotion.com/">RubyMotion</a>, which is pretty nifty since I&rsquo;m much more comfortable in Ruby than Objective-C and writing tests is way easier in Ruby. However, it&rsquo;s far from the fully-featured <a href="http://rspec.info/">RSpec</a> like I&rsquo;m used to.</p>
 
@@ -1265,7 +1265,7 @@ end</code></pre></noscript></div>
   <entry>
     <title type="html"><![CDATA[Showing the Crash Dialog for Backgrounded Cocoa Apps]]></title>
     <link href="http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps/"/>
-    <updated>2013-06-02T15:17:00+02:00</updated>
+    <updated>2013-06-02T15:17:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps</id>
     <content type="html"><![CDATA[<p>While developing <a href="http://shortcatapp.com">Shortcat</a>, I ran into an extremely annoying problem with <code>LSUIElement</code> apps: They crash silently, giving the user no indication that it has crashed. This is especially bad when you don&rsquo;t have any visual indicator that it&rsquo;s running.</p>
 

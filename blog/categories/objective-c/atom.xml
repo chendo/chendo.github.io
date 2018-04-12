@@ -4,10 +4,10 @@
   <title><![CDATA[Category: objective-c | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
     <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
-    <updated>2013-09-30T14:01:00+02:00</updated>
+    <updated>2013-09-30T14:01:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
     <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
 
@@ -65,7 +65,7 @@ echo "command script import ~/Library/lldb/ignore_specified_objc_exceptions.py" 
   <entry>
     <title type="html"><![CDATA[Showing the Crash Dialog for Backgrounded Cocoa Apps]]></title>
     <link href="http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps/"/>
-    <updated>2013-06-02T15:17:00+02:00</updated>
+    <updated>2013-06-02T15:17:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/06/02/showing-the-crash-dialog-for-backgrounded-cocoa-apps</id>
     <content type="html"><![CDATA[<p>While developing <a href="http://shortcatapp.com">Shortcat</a>, I ran into an extremely annoying problem with <code>LSUIElement</code> apps: They crash silently, giving the user no indication that it has crashed. This is especially bad when you don&rsquo;t have any visual indicator that it&rsquo;s running.</p>
 

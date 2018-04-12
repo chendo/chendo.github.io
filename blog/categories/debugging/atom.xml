@@ -4,10 +4,10 @@
   <title><![CDATA[Category: debugging | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/debugging/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Live Wireshark session from remote machine]]></title>
     <link href="http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine/"/>
-    <updated>2015-07-12T14:16:00+02:00</updated>
+    <updated>2015-07-12T14:16:00+10:00</updated>
     <id>http://chendo.github.io/blog/2015/07/12/live-wireshark-session-from-remote-machine</id>
     <content type="html"><![CDATA[<p>I was tasked to debug some network stack issues last week at work which required intercepting wireless traffic at the router. Previously, I would use my Macbook to share internet through an Ethernet port, and then open a Wireshark session on <code>bridge100</code> to look at traffic this way.</p>
 
@@ -43,7 +43,7 @@
   <entry>
     <title type="html"><![CDATA[Simulating out of order packets on OS X]]></title>
     <link href="http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x/"/>
-    <updated>2014-10-11T17:51:00+02:00</updated>
+    <updated>2014-10-11T17:51:00+11:00</updated>
     <id>http://chendo.github.io/blog/2014/10/11/simulating-out-of-order-packets-on-os-x</id>
     <content type="html"><![CDATA[<p>I needed a way to simulate out of order packets in order to try to reproduce an issue I&rsquo;ve been seeing at work, and I figured out a fairly simple way that only involves <code>ipfw</code> which is built-in on 10.9 but unfortunately has been removed in 10.10. The same technique should be adaptable to <code>pfctl</code> though.</p>
 
@@ -92,7 +92,7 @@ sudo ruby -e "loop { \\`ipfw pipe 1 config delay #{rand(500) + 100}ms\\`; sleep 
   <entry>
     <title type="html"><![CDATA[Selectively ignoring Objective-C exceptions in Xcode]]></title>
     <link href="http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode/"/>
-    <updated>2013-09-30T14:01:00+02:00</updated>
+    <updated>2013-09-30T14:01:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/09/30/selectively-ignoring-objective-c-exceptions-in-xcode</id>
     <content type="html"><![CDATA[<p><strong>Edit &ndash; Octorber 9, 2013:</strong> Updated the script to support iOS Simulator (i386) and iPhone 5S (ARM 64bit).</p>
 

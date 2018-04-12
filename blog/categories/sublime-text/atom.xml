@@ -4,10 +4,10 @@
   <title><![CDATA[Category: sublime text | chendo]]></title>
   <link href="http://chendo.github.io/blog/categories/sublime-text/atom.xml" rel="self"/>
   <link href="http://chendo.github.io/"/>
-  <updated>2017-10-23T08:57:00+02:00</updated>
+  <updated>2018-04-12T23:34:45+10:00</updated>
   <id>http://chendo.github.io/</id>
   <author>
-    <name><![CDATA[Jack 'chendo' Chen]]></name>
+    <name><![CDATA[chendo]]></name>
     <email><![CDATA[blog@chen.do]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Editing files on a remote server with Sublime Text 2]]></title>
     <link href="http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2/"/>
-    <updated>2013-09-16T12:57:00+02:00</updated>
+    <updated>2013-09-16T12:57:00+10:00</updated>
     <id>http://chendo.github.io/blog/2013/09/16/editing-files-on-a-remote-server-with-sublime-text-2</id>
     <content type="html"><![CDATA[<p>I&rsquo;ve always hated editing files on a remote machine over SSH. I&rsquo;m not a huge fan of vim, and nano is terrible for anything remotely (hah, get it?) complex.</p>
 
